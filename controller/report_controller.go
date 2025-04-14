@@ -47,15 +47,28 @@ func (c *ReportController) Create(ctx *gin.Context) {
 	}
 
 	file, err := ctx.FormFile("file")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
+	// if file is not required, set file to nil
+	if file == nil {
+		file = nil
+		if reportRequest.Content == "" {
+			ctx.JSON(http.StatusBadRequest, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: "Content is required",
+			})
+			return
+		}
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
-			Message: "File is required",
+			Message: "Token is required",
 		})
 		return
 	}
 
-	report, err := c.reportService.Create(ctx, reportRequest, file)
+	report, err := c.reportService.Create(ctx, reportRequest, file, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

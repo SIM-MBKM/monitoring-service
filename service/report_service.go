@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"mime/multipart"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
@@ -14,23 +15,27 @@ import (
 )
 
 type reportService struct {
-	reportRepo  repository.ReportRepository
-	fileService *FileService
+	reportRepo            repository.ReportRepository
+	reportScheduleRepo    repository.ReportScheduleReposiotry
+	fileService           *FileService
+	userManagementService *UserManagementService
 }
 
 type ReportService interface {
 	Index(ctx context.Context) ([]dto.ReportResponse, error)
-	Create(ctx context.Context, report dto.ReportRequest, file *multipart.FileHeader) (dto.ReportResponse, error)
+	Create(ctx context.Context, report dto.ReportRequest, file *multipart.FileHeader, token string) (dto.ReportResponse, error)
 	Update(ctx context.Context, id string, report dto.ReportRequest) error
 	FindByID(ctx context.Context, id string) (dto.ReportResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string) ([]dto.ReportResponse, error)
 }
 
-func NewReportService(reportRepo repository.ReportRepository, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
+func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo repository.ReportScheduleReposiotry, userManagementBaseURI string, asyncURIs []string, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
 	return &reportService{
-		reportRepo:  reportRepo,
-		fileService: NewFileService(config, tokenManager),
+		reportRepo:            reportRepo,
+		reportScheduleRepo:    reportScheduleRepo,
+		fileService:           NewFileService(config, tokenManager),
+		userManagementService: NewUserManagementService(userManagementBaseURI, asyncURIs),
 	}
 }
 
@@ -59,15 +64,34 @@ func (s *reportService) Index(ctx context.Context) ([]dto.ReportResponse, error)
 }
 
 // Create creates a new report
-func (s *reportService) Create(ctx context.Context, report dto.ReportRequest, file *multipart.FileHeader) (dto.ReportResponse, error) {
+func (s *reportService) Create(ctx context.Context, report dto.ReportRequest, file *multipart.FileHeader, token string) (dto.ReportResponse, error) {
 	// Generate new UUID for the report
-	result, err := s.fileService.storage.GcsUpload(file, "sim_mbkm", "report", "report")
+	var result *storageService.FileResponse
+	if file != nil {
+		var err error
+		result, err = s.fileService.storage.GcsUpload(file, "sim_mbkm", "report", "report")
+		if err != nil {
+			return dto.ReportResponse{}, err
+		}
+	}
+
+	reportSchedule, err := s.reportScheduleRepo.FindByID(ctx, report.ReportScheduleID, nil)
 	if err != nil {
 		return dto.ReportResponse{}, err
 	}
+
+	user := s.userManagementService.GetUserData("GET", token)
+
+	if user["id"] != reportSchedule.UserID {
+		return dto.ReportResponse{}, errors.New("unauthorized")
+	}
+
 	var reportEntity entity.Report
 	reportEntity.ID = uuid.New()
-	reportEntity.FileStorageID = result.FileID
+	reportEntity.ReportScheduleID = report.ReportScheduleID
+	if result != nil {
+		reportEntity.FileStorageID = result.FileID
+	}
 	reportEntity.Title = report.Title
 	reportEntity.Content = report.Content
 	reportEntity.ReportType = report.ReportType
