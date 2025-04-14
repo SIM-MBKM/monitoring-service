@@ -1,0 +1,9 @@
+.env
+logs/
+*.txt
+tmp/
+volumes
+storage/*
+static/*
+main
+*.json
