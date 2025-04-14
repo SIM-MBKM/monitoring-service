@@ -1,0 +1,173 @@
+package controller
+
+import (
+	"monitoring-service/dto"
+	"monitoring-service/service"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ReportScheduleController struct {
+	reportScheduleService service.ReportScheduleService
+}
+
+func NewReportScheduleController(reportScheduleService service.ReportScheduleService) *ReportScheduleController {
+	return &ReportScheduleController{
+		reportScheduleService: reportScheduleService,
+	}
+}
+
+// Index handles GET /api/v1/report-schedules
+func (c *ReportScheduleController) Index(ctx *gin.Context) {
+	reportSchedules, err := c.reportScheduleService.Index(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedules,
+	})
+}
+
+// Create handles POST /api/v1/report-schedules
+func (c *ReportScheduleController) Create(ctx *gin.Context) {
+	var reportScheduleRequest dto.ReportScheduleRequest
+	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	reportSchedule, err := c.reportScheduleService.Create(ctx, reportScheduleRequest)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedule,
+	})
+}
+
+// Update handles PUT /api/v1/report-schedules/:id
+func (c *ReportScheduleController) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "ID is required",
+		})
+		return
+	}
+
+	var reportScheduleRequest dto.ReportScheduleRequest
+	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	err := c.reportScheduleService.Update(ctx, id, reportScheduleRequest)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+	})
+}
+
+// Show handles GET /api/v1/report-schedules/:id
+func (c *ReportScheduleController) Show(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "ID is required",
+		})
+		return
+	}
+
+	reportSchedule, err := c.reportScheduleService.FindByID(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedule,
+	})
+}
+
+// Destroy handles DELETE /api/v1/report-schedules/:id
+func (c *ReportScheduleController) Destroy(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "ID is required",
+		})
+		return
+	}
+
+	err := c.reportScheduleService.Destroy(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+	})
+}
+
+// FindByRegistrationID handles GET /api/v1/registrations/:id/report-schedules
+func (c *ReportScheduleController) FindByRegistrationID(ctx *gin.Context) {
+	registrationID := ctx.Param("id")
+	if registrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+
+	reportSchedules, err := c.reportScheduleService.FindByRegistrationID(ctx, registrationID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedules,
+	})
+}

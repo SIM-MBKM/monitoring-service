@@ -2,6 +2,7 @@ package dto
 
 type (
 	ReportScheduleRequest struct {
+		UserID            string `json:"user_id" validate:"required"`
 		RegistrationID    string `json:"registration_id" validate:"required"`
 		AcademicAdvisorID string `json:"academic_advisor_id" validate:"required"`
 		ReportType        string `json:"report_type" validate:"required"`
@@ -12,6 +13,7 @@ type (
 
 	ReportScheduleResponse struct {
 		ID                string `json:"id"`
+		UserID            string `json:"user_id"`
 		RegistrationID    string `json:"registration_id"`
 		AcademicAdvisorID string `json:"academic_advisor_id"`
 		ReportType        string `json:"report_type"`

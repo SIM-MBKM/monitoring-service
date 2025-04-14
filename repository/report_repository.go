@@ -15,7 +15,7 @@ type reportRepository struct {
 type ReportRepository interface {
 	Index(ctx context.Context, tx *gorm.DB) ([]entity.Report, error)
 	Create(ctx context.Context, report entity.Report, tx *gorm.DB) (entity.Report, error)
-	Update(ctx context.Context, report entity.Report, tx *gorm.DB) error
+	Update(ctx context.Context, id string, report entity.Report, tx *gorm.DB) error
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.Report, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string, tx *gorm.DB) ([]entity.Report, error)
@@ -65,7 +65,7 @@ func (r *reportRepository) Create(ctx context.Context, report entity.Report, tx 
 
 	return report, nil
 }
-func (r *reportRepository) Update(ctx context.Context, report entity.Report, tx *gorm.DB) error {
+func (r *reportRepository) Update(ctx context.Context, id string, report entity.Report, tx *gorm.DB) error {
 	tx, err := r.baseRepository.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *reportRepository) Update(ctx context.Context, report entity.Report, tx 
 		}
 	}()
 
-	err = tx.Debug().Model(&entity.Report{}).Where("id = ?", report.ID).Updates(&report).Error
+	err = tx.Debug().Model(&entity.Report{}).Where("id = ?", id).Updates(&report).Error
 	if err != nil {
 		return err
 	}

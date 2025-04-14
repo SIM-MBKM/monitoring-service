@@ -15,7 +15,7 @@ type reportScheduleRepository struct {
 type ReportScheduleReposiotry interface {
 	Index(ctx context.Context, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	Create(ctx context.Context, reportSchedule entity.ReportSchedule, tx *gorm.DB) (entity.ReportSchedule, error)
-	Update(ctx context.Context, reportSchedule entity.ReportSchedule, tx *gorm.DB) error
+	Update(ctx context.Context, id string, reportSchedule entity.ReportSchedule, tx *gorm.DB) error
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.ReportSchedule, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
@@ -77,7 +77,7 @@ func (r *reportScheduleRepository) Create(ctx context.Context, reportSchedule en
 	return reportSchedule, nil
 }
 
-func (r *reportScheduleRepository) Update(ctx context.Context, reportSchedule entity.ReportSchedule, tx *gorm.DB) error {
+func (r *reportScheduleRepository) Update(ctx context.Context, id string, reportSchedule entity.ReportSchedule, tx *gorm.DB) error {
 	tx, err := r.baseRepository.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (r *reportScheduleRepository) Update(ctx context.Context, reportSchedule en
 		tx = r.db.WithContext(ctx)
 	}
 
-	err = tx.Debug().Model(&entity.ReportSchedule{}).Where("id = ?", reportSchedule.ID).Updates(reportSchedule).Error
+	err = tx.Debug().Model(&entity.ReportSchedule{}).Where("id = ?", id).Updates(reportSchedule).Error
 	if err != nil {
 		return err
 	}
