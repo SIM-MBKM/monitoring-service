@@ -35,7 +35,13 @@ func (r *reportScheduleRepository) Index(ctx context.Context, tx *gorm.DB) ([]en
 		tx = r.db.WithContext(ctx)
 	}
 
-	err := tx.Debug().Model(&entity.ReportSchedule{}).Find(&reportSchedules).Where("deleted_at IS NULL").Error
+	err := tx.Debug().Model(&entity.ReportSchedule{}).
+		Where("deleted_at IS NULL").
+		Preload("Report", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC").Limit(1)
+		}).
+		Find(&reportSchedules).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +110,14 @@ func (r *reportScheduleRepository) FindByID(ctx context.Context, id string, tx *
 		tx = r.db.WithContext(ctx)
 	}
 
-	err := tx.Debug().Model(&entity.ReportSchedule{}).Where("id = ?", id).First(&reportSchedule).Error
+	err := tx.Debug().
+		Model(&entity.ReportSchedule{}).
+		Preload("Report", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC").Limit(1)
+		}).
+		Where("id = ?", id).
+		First(&reportSchedule).Error
+
 	if err != nil {
 		return reportSchedule, err
 	}

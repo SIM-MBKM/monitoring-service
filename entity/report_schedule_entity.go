@@ -16,6 +16,7 @@ type (
 		Week              string     `json:"week"`
 		StartDate         *time.Time `json:"start_date"`
 		EndDate           *time.Time `json:"end_date"`
+		Report            []Report   `json:"report" gorm:"foreignKey:ReportScheduleID"`
 		BaseModel
 	}
 )
