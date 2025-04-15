@@ -41,14 +41,15 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 	var reportScheduleResponses []dto.ReportScheduleResponse
 	for _, reportSchedule := range reportSchedules {
 		reportScheduleResponses = append(reportScheduleResponses, dto.ReportScheduleResponse{
-			ID:                reportSchedule.ID.String(),
-			UserID:            reportSchedule.UserID,
-			RegistrationID:    reportSchedule.RegistrationID,
-			AcademicAdvisorID: reportSchedule.AcademicAdvisorID,
-			ReportType:        reportSchedule.ReportType,
-			Week:              reportSchedule.Week,
-			StartDate:         reportSchedule.StartDate.Format(time.RFC3339),
-			EndDate:           reportSchedule.EndDate.Format(time.RFC3339),
+			ID:                   reportSchedule.ID.String(),
+			UserID:               reportSchedule.UserID,
+			RegistrationID:       reportSchedule.RegistrationID,
+			AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
+			AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
+			ReportType:           reportSchedule.ReportType,
+			Week:                 reportSchedule.Week,
+			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
+			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
 			Report: &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
@@ -73,6 +74,7 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 	reportScheduleEntity.UserID = reportSchedule.UserID
 	reportScheduleEntity.RegistrationID = reportSchedule.RegistrationID
 	reportScheduleEntity.AcademicAdvisorID = reportSchedule.AcademicAdvisorID
+	reportScheduleEntity.AcademicAdvisorEmail = reportSchedule.AcademicAdvisorEmail
 	reportScheduleEntity.ReportType = reportSchedule.ReportType
 	reportScheduleEntity.Week = reportSchedule.Week
 	// convert string to time.Time
@@ -101,14 +103,15 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 	}
 
 	return dto.ReportScheduleResponse{
-		ID:                reportScheduleEntity.ID.String(),
-		UserID:            reportScheduleEntity.UserID,
-		RegistrationID:    reportScheduleEntity.RegistrationID,
-		AcademicAdvisorID: reportScheduleEntity.AcademicAdvisorID,
-		ReportType:        reportScheduleEntity.ReportType,
-		Week:              reportScheduleEntity.Week,
-		StartDate:         reportScheduleEntity.StartDate.Format(time.RFC3339),
-		EndDate:           reportScheduleEntity.EndDate.Format(time.RFC3339),
+		ID:                   reportScheduleEntity.ID.String(),
+		UserID:               reportScheduleEntity.UserID,
+		RegistrationID:       reportScheduleEntity.RegistrationID,
+		AcademicAdvisorID:    reportScheduleEntity.AcademicAdvisorID,
+		AcademicAdvisorEmail: reportScheduleEntity.AcademicAdvisorEmail,
+		ReportType:           reportScheduleEntity.ReportType,
+		Week:                 reportScheduleEntity.Week,
+		StartDate:            reportScheduleEntity.StartDate.Format(time.RFC3339),
+		EndDate:              reportScheduleEntity.EndDate.Format(time.RFC3339),
 	}, nil
 }
 
@@ -172,6 +175,7 @@ func (s *reportScheduleService) FindByID(ctx context.Context, id string) (dto.Re
 	reportScheduleResponse.UserID = reportSchedule.UserID
 	reportScheduleResponse.RegistrationID = reportSchedule.RegistrationID
 	reportScheduleResponse.AcademicAdvisorID = reportSchedule.AcademicAdvisorID
+	reportScheduleResponse.AcademicAdvisorEmail = reportSchedule.AcademicAdvisorEmail
 	reportScheduleResponse.ReportType = reportSchedule.ReportType
 	reportScheduleResponse.Week = reportSchedule.Week
 	reportScheduleResponse.StartDate = reportSchedule.StartDate.Format(time.RFC3339)
@@ -211,14 +215,15 @@ func (s *reportScheduleService) FindByRegistrationID(ctx context.Context, regist
 	var reportScheduleResponses []dto.ReportScheduleResponse
 	for _, reportSchedule := range reportSchedules {
 		reportScheduleResponses = append(reportScheduleResponses, dto.ReportScheduleResponse{
-			ID:                reportSchedule.ID.String(),
-			UserID:            reportSchedule.UserID,
-			RegistrationID:    reportSchedule.RegistrationID,
-			AcademicAdvisorID: reportSchedule.AcademicAdvisorID,
-			ReportType:        reportSchedule.ReportType,
-			Week:              reportSchedule.Week,
-			StartDate:         reportSchedule.StartDate.Format(time.RFC3339),
-			EndDate:           reportSchedule.EndDate.Format(time.RFC3339),
+			ID:                   reportSchedule.ID.String(),
+			UserID:               reportSchedule.UserID,
+			RegistrationID:       reportSchedule.RegistrationID,
+			AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
+			AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
+			ReportType:           reportSchedule.ReportType,
+			Week:                 reportSchedule.Week,
+			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
+			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
 			Report: &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
