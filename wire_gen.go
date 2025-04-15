@@ -23,7 +23,7 @@ func InitializeAPI(db *gorm.DB, config *storage.Config, tokenManager *storage.Ca
 	reportScheduleReposiotry := ProvideReportScheduleRepository(db)
 	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, asyncURIs, config, tokenManager)
 	reportController := ProvideReportController(reportService)
-	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry)
+	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, asyncURIs)
 	reportScheduleController := ProvideReportScheduleController(reportScheduleService)
 	application := newApplication(reportController, reportScheduleController)
 	return application, nil
@@ -92,8 +92,10 @@ func ProvideReportService(
 
 func ProvideReportScheduleService(
 	reportScheduleRepo repository.ReportScheduleReposiotry,
+	userManagementBaseURI string,
+	asyncURIs []string,
 ) service.ReportScheduleService {
-	return service.NewReportScheduleService(reportScheduleRepo)
+	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, asyncURIs)
 }
 
 // Controller providers

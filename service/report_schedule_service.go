@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
@@ -13,21 +14,23 @@ import (
 )
 
 type reportScheduleService struct {
-	reportScheduleRepo repository.ReportScheduleReposiotry
+	reportScheduleRepo    repository.ReportScheduleReposiotry
+	userManagementService *UserManagementService
 }
 
 type ReportScheduleService interface {
 	Index(ctx context.Context) ([]dto.ReportScheduleResponse, error)
-	Create(ctx context.Context, reportSchedule dto.ReportScheduleRequest) (dto.ReportScheduleResponse, error)
+	Create(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (dto.ReportScheduleResponse, error)
 	Update(ctx context.Context, id string, subject dto.ReportScheduleRequest) error
 	FindByID(ctx context.Context, id string) (dto.ReportScheduleResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) ([]dto.ReportScheduleResponse, error)
 }
 
-func NewReportScheduleService(reportScheduleRepo repository.ReportScheduleReposiotry) ReportScheduleService {
+func NewReportScheduleService(reportScheduleRepo repository.ReportScheduleReposiotry, userManagementbaseURI string, asyncURIs []string) ReportScheduleService {
 	return &reportScheduleService{
-		reportScheduleRepo: reportScheduleRepo,
+		reportScheduleRepo:    reportScheduleRepo,
+		userManagementService: NewUserManagementService(userManagementbaseURI, asyncURIs),
 	}
 }
 
@@ -67,8 +70,29 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 }
 
 // Create creates a new report schedule
-func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.ReportScheduleRequest) (dto.ReportScheduleResponse, error) {
-	// Generate new UUID for the report schedule
+func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (dto.ReportScheduleResponse, error) {
+	// first we need to get user email and user id
+	user := s.userManagementService.GetUserData("GET", token)
+
+	// convert userRole to string
+	userRole, ok := user["role"].(string)
+	if !ok {
+		return dto.ReportScheduleResponse{}, errors.New("user role not found")
+	}
+
+	if userRole == "DOSEN PEMBIMBING" {
+		userEmail, ok := user["email"].(string)
+		if !ok {
+			return dto.ReportScheduleResponse{}, errors.New("user email not found")
+		}
+
+		if userEmail != reportSchedule.AcademicAdvisorEmail {
+			return dto.ReportScheduleResponse{}, errors.New("user email not match")
+		}
+	} else if userRole != "ADMIN" && userRole != "LO-MBKM" {
+		return dto.ReportScheduleResponse{}, errors.New("user role not allowed")
+	}
+
 	var reportScheduleEntity entity.ReportSchedule
 	reportScheduleEntity.ID = uuid.New()
 	reportScheduleEntity.UserID = reportSchedule.UserID

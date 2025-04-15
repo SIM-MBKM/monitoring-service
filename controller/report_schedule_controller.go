@@ -48,7 +48,16 @@ func (c *ReportScheduleController) Create(ctx *gin.Context) {
 		return
 	}
 
-	reportSchedule, err := c.reportScheduleService.Create(ctx, reportScheduleRequest)
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	reportSchedule, err := c.reportScheduleService.Create(ctx, reportScheduleRequest, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

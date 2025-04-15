@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-package di
+package main
 
 import (
 	"monitoring-service/controller"
@@ -74,8 +74,10 @@ func ProvideReportService(
 
 func ProvideReportScheduleService(
 	reportScheduleRepo repository.ReportScheduleReposiotry,
+	userManagementBaseURI string,
+	asyncURIs []string,
 ) service.ReportScheduleService {
-	return service.NewReportScheduleService(reportScheduleRepo)
+	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, asyncURIs)
 }
 
 // Controller providers
