@@ -9,7 +9,7 @@ import (
 )
 
 func ReportRoutes(router *gin.Engine, reportController controller.ReportController, userManagementService service.UserManagementService) {
-	authMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN", "DOSEN", "MAHASISWA"})
+	authMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN", "DOSEN PEMBIMBING", "MAHASISWA"})
 
 	reportRoutes := router.Group("/monitoring-service/api/v1/reports")
 	{

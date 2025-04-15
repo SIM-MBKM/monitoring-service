@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"monitoring-service/dto"
 	"monitoring-service/service"
 	"net/http"
@@ -39,6 +40,7 @@ func (c *ReportScheduleController) Index(ctx *gin.Context) {
 func (c *ReportScheduleController) Create(ctx *gin.Context) {
 	var reportScheduleRequest dto.ReportScheduleRequest
 	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
+		log.Println("ERROR: ", err)
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
@@ -56,8 +58,9 @@ func (c *ReportScheduleController) Create(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedule,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reportSchedule,
+		Message: "Report schedule created successfully",
 	})
 }
 

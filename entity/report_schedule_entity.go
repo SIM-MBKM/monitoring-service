@@ -13,7 +13,7 @@ type (
 		RegistrationID    string     `json:"registration_id"`
 		AcademicAdvisorID string     `json:"academic_advisor_id"`
 		ReportType        string     `json:"report_type"`
-		Week              string     `json:"week"`
+		Week              int        `json:"week"`
 		StartDate         *time.Time `json:"start_date"`
 		EndDate           *time.Time `json:"end_date"`
 		Report            []Report   `json:"report" gorm:"foreignKey:ReportScheduleID"`

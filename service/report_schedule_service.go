@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
 	"monitoring-service/repository"
@@ -46,9 +47,9 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 			AcademicAdvisorID: reportSchedule.AcademicAdvisorID,
 			ReportType:        reportSchedule.ReportType,
 			Week:              reportSchedule.Week,
-			StartDate:         reportSchedule.StartDate.Format("2006-01-02"),
-			EndDate:           reportSchedule.EndDate.Format("2006-01-02"),
-			Report: dto.ReportResponse{
+			StartDate:         reportSchedule.StartDate.Format(time.RFC3339),
+			EndDate:           reportSchedule.EndDate.Format(time.RFC3339),
+			Report: &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
 				Title:                 reportSchedule.Report[0].Title,
@@ -75,13 +76,15 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 	reportScheduleEntity.ReportType = reportSchedule.ReportType
 	reportScheduleEntity.Week = reportSchedule.Week
 	// convert string to time.Time
-	start_date, err := time.Parse("2006-01-02", reportSchedule.StartDate)
+	start_date, err := time.Parse(time.RFC3339, reportSchedule.StartDate)
 	if err != nil {
+		log.Println("ERROR CONVERTING START DATE: ", err)
 		return dto.ReportScheduleResponse{}, err
 	}
 	reportScheduleEntity.StartDate = &start_date
-	end_date, err := time.Parse("2006-01-02", reportSchedule.EndDate)
+	end_date, err := time.Parse(time.RFC3339, reportSchedule.EndDate)
 	if err != nil {
+		log.Println("ERROR CONVERTING END DATE: ", err)
 		return dto.ReportScheduleResponse{}, err
 	}
 	reportScheduleEntity.EndDate = &end_date
@@ -93,10 +96,20 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 
 	_, err = s.reportScheduleRepo.Create(ctx, reportScheduleEntity, nil)
 	if err != nil {
+		log.Println("ERROR CREATING REPORT SCHEDULE: ", err)
 		return dto.ReportScheduleResponse{}, err
 	}
 
-	return dto.ReportScheduleResponse{}, nil
+	return dto.ReportScheduleResponse{
+		ID:                reportScheduleEntity.ID.String(),
+		UserID:            reportScheduleEntity.UserID,
+		RegistrationID:    reportScheduleEntity.RegistrationID,
+		AcademicAdvisorID: reportScheduleEntity.AcademicAdvisorID,
+		ReportType:        reportScheduleEntity.ReportType,
+		Week:              reportScheduleEntity.Week,
+		StartDate:         reportScheduleEntity.StartDate.Format(time.RFC3339),
+		EndDate:           reportScheduleEntity.EndDate.Format(time.RFC3339),
+	}, nil
 }
 
 func (s *reportScheduleService) Update(ctx context.Context, id string, subject dto.ReportScheduleRequest) error {
@@ -161,10 +174,10 @@ func (s *reportScheduleService) FindByID(ctx context.Context, id string) (dto.Re
 	reportScheduleResponse.AcademicAdvisorID = reportSchedule.AcademicAdvisorID
 	reportScheduleResponse.ReportType = reportSchedule.ReportType
 	reportScheduleResponse.Week = reportSchedule.Week
-	reportScheduleResponse.StartDate = reportSchedule.StartDate.Format("2006-01-02")
-	reportScheduleResponse.EndDate = reportSchedule.EndDate.Format("2006-01-02")
+	reportScheduleResponse.StartDate = reportSchedule.StartDate.Format(time.RFC3339)
+	reportScheduleResponse.EndDate = reportSchedule.EndDate.Format(time.RFC3339)
 
-	reportScheduleResponse.Report = dto.ReportResponse{
+	reportScheduleResponse.Report = &dto.ReportResponse{
 		ID:                    reportSchedule.Report[0].ID.String(),
 		ReportScheduleID:      reportSchedule.ID.String(),
 		FileStorageID:         reportSchedule.Report[0].FileStorageID,
@@ -204,9 +217,9 @@ func (s *reportScheduleService) FindByRegistrationID(ctx context.Context, regist
 			AcademicAdvisorID: reportSchedule.AcademicAdvisorID,
 			ReportType:        reportSchedule.ReportType,
 			Week:              reportSchedule.Week,
-			StartDate:         reportSchedule.StartDate.Format("2006-01-02"),
-			EndDate:           reportSchedule.EndDate.Format("2006-01-02"),
-			Report: dto.ReportResponse{
+			StartDate:         reportSchedule.StartDate.Format(time.RFC3339),
+			EndDate:           reportSchedule.EndDate.Format(time.RFC3339),
+			Report: &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
 				FileStorageID:         reportSchedule.Report[0].FileStorageID,
