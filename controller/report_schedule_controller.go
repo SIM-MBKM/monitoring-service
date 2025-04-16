@@ -72,7 +72,16 @@ func (c *ReportScheduleController) FindByStudentID(ctx *gin.Context) {
 
 // Index handles GET /api/v1/report-schedules
 func (c *ReportScheduleController) Index(ctx *gin.Context) {
-	reportSchedules, err := c.reportScheduleService.Index(ctx)
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	reportSchedules, err := c.reportScheduleService.Index(ctx, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -135,6 +144,15 @@ func (c *ReportScheduleController) Update(ctx *gin.Context) {
 		return
 	}
 
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
 	var reportScheduleRequest dto.ReportScheduleRequest
 	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -144,7 +162,7 @@ func (c *ReportScheduleController) Update(ctx *gin.Context) {
 		return
 	}
 
-	err := c.reportScheduleService.Update(ctx, id, reportScheduleRequest)
+	err := c.reportScheduleService.Update(ctx, id, reportScheduleRequest, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -204,7 +222,16 @@ func (c *ReportScheduleController) Destroy(ctx *gin.Context) {
 		return
 	}
 
-	err := c.reportScheduleService.Destroy(ctx, id)
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	err := c.reportScheduleService.Destroy(ctx, id, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

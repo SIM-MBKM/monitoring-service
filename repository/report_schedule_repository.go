@@ -13,7 +13,7 @@ type reportScheduleRepository struct {
 }
 
 type ReportScheduleReposiotry interface {
-	Index(ctx context.Context, tx *gorm.DB) ([]entity.ReportSchedule, error)
+	Index(ctx context.Context, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
 	Create(ctx context.Context, reportSchedule entity.ReportSchedule, tx *gorm.DB) (entity.ReportSchedule, error)
 	Update(ctx context.Context, id string, reportSchedule entity.ReportSchedule, tx *gorm.DB) error
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.ReportSchedule, error)
@@ -82,25 +82,31 @@ func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userID stri
 	return reportSchedules, nil
 }
 
-func (r *reportScheduleRepository) Index(ctx context.Context, tx *gorm.DB) ([]entity.ReportSchedule, error) {
-	var reportSchedules []entity.ReportSchedule
-
+func (r *reportScheduleRepository) Index(ctx context.Context, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
 	if tx == nil {
-		tx = r.db.WithContext(ctx)
+		tx = r.db
 	}
 
-	err := tx.Debug().Model(&entity.ReportSchedule{}).
+	var allReportSchedules []entity.ReportSchedule
+	err := tx.Debug().
+		Model(&entity.ReportSchedule{}).
 		Where("deleted_at IS NULL").
 		Preload("Report", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
-		Find(&reportSchedules).Error
+		Find(&allReportSchedules).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return reportSchedules, nil
+	// Group them by user_id
+	userReportSchedules := make(map[string][]entity.ReportSchedule)
+	for _, schedule := range allReportSchedules {
+		userReportSchedules[schedule.UserID] = append(userReportSchedules[schedule.UserID], schedule)
+	}
+
+	return userReportSchedules, nil
 }
 
 func (r *reportScheduleRepository) Create(ctx context.Context, reportSchedule entity.ReportSchedule, tx *gorm.DB) (entity.ReportSchedule, error) {

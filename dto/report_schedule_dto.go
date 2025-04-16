@@ -26,7 +26,6 @@ type (
 	}
 
 	ReportScheduleByAdvisorResponse struct {
-		AdvisorEmail string                              `json:"advisor_email"`
-		Reports      map[string][]ReportScheduleResponse `json:"reports"`
+		Reports map[string][]ReportScheduleResponse `json:"reports"`
 	}
 )

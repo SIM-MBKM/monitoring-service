@@ -24,6 +24,28 @@ func NewUserManagementService(baseURI string, asyncURIs []string) *UserManagemen
 	}
 }
 
+func (s *UserManagementService) GetUserByID(method string, token string, id string) map[string]interface{} {
+	res, err := s.baseService.Request(method, GET_USER_DATA_ENDPOINT+"/"+id, nil, token)
+	if err != nil {
+		return nil
+	}
+
+	users, ok := res["data"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	var userData map[string]interface{}
+	userData = map[string]interface{}{
+		"id":    users["id"],
+		"nrp":   users["nrp"],
+		"name":  users["name"],
+		"role":  users["role"],
+		"email": users["email"],
+	}
+	return userData
+}
+
 // create function to get user by id
 func (s *UserManagementService) GetUserData(method string, token string) map[string]interface{} {
 	res, err := s.baseService.Request(method, GET_USER_DATA_ENDPOINT, nil, token)

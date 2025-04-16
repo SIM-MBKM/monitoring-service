@@ -19,11 +19,11 @@ type reportScheduleService struct {
 }
 
 type ReportScheduleService interface {
-	Index(ctx context.Context) ([]dto.ReportScheduleResponse, error)
+	Index(ctx context.Context, token string) (dto.ReportScheduleByAdvisorResponse, error)
 	Create(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (dto.ReportScheduleResponse, error)
-	Update(ctx context.Context, id string, subject dto.ReportScheduleRequest) error
+	Update(ctx context.Context, id string, subject dto.ReportScheduleRequest, token string) error
 	FindByID(ctx context.Context, id string, token string) (dto.ReportScheduleResponse, error)
-	Destroy(ctx context.Context, id string) error
+	Destroy(ctx context.Context, id string, token string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) ([]dto.ReportScheduleResponse, error)
 	ReportScheduleAccess(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (bool, error)
 	FindByUserID(ctx context.Context, token string) ([]dto.ReportScheduleResponse, error)
@@ -52,6 +52,13 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 	reportScheduleResponses := make(map[string][]dto.ReportScheduleResponse)
 
 	for userID, reportScheduleAdvisors := range reportSchedules {
+		// get user by user id
+		user := s.userManagementService.GetUserByID("GET", token, userID)
+		userName, ok := user["name"].(string)
+		if !ok {
+			return dto.ReportScheduleByAdvisorResponse{}, errors.New("user name not found")
+		}
+
 		var reportSchedule []dto.ReportScheduleResponse
 		for _, reportScheduleAdvisor := range reportScheduleAdvisors {
 			// Create the base response
@@ -83,12 +90,11 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 
 			reportSchedule = append(reportSchedule, response)
 		}
-		reportScheduleResponses[userID] = reportSchedule // Convert to string
+		reportScheduleResponses[userName] = reportSchedule // Convert to string
 	}
 
 	return dto.ReportScheduleByAdvisorResponse{
-		AdvisorEmail: advisorEmail,
-		Reports:      reportScheduleResponses,
+		Reports: reportScheduleResponses,
 	}, nil
 }
 
@@ -137,42 +143,59 @@ func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) 
 }
 
 // Index retrieves all report schedules
-func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportScheduleResponse, error) {
+func (s *reportScheduleService) Index(ctx context.Context, token string) (dto.ReportScheduleByAdvisorResponse, error) {
 	reportSchedules, err := s.reportScheduleRepo.Index(ctx, nil)
 	if err != nil {
-		return nil, err
+		return dto.ReportScheduleByAdvisorResponse{}, err
 	}
 
-	var reportScheduleResponses []dto.ReportScheduleResponse
-	for _, reportSchedule := range reportSchedules {
-		reportScheduleResponse := dto.ReportScheduleResponse{
-			ID:                   reportSchedule.ID.String(),
-			UserID:               reportSchedule.UserID,
-			RegistrationID:       reportSchedule.RegistrationID,
-			AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
-			AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
-			ReportType:           reportSchedule.ReportType,
-			Week:                 reportSchedule.Week,
-			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
-			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
+	reportScheduleResponses := make(map[string][]dto.ReportScheduleResponse)
+
+	for userID, reportScheduleAdvisors := range reportSchedules {
+		// get user by user id
+		user := s.userManagementService.GetUserByID("GET", token, userID)
+		userName, ok := user["name"].(string)
+		if !ok {
+			return dto.ReportScheduleByAdvisorResponse{}, errors.New("user name not found")
 		}
 
-		if len(reportSchedule.Report) > 0 {
-			reportScheduleResponse.Report = &dto.ReportResponse{
-				ID:                    reportSchedule.Report[0].ID.String(),
-				ReportScheduleID:      reportSchedule.ID.String(),
-				Title:                 reportSchedule.Report[0].Title,
-				Content:               reportSchedule.Report[0].Content,
-				ReportType:            reportSchedule.Report[0].ReportType,
-				Feedback:              reportSchedule.Report[0].Feedback,
-				AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
-				FileStorageID:         reportSchedule.Report[0].FileStorageID,
+		var reportSchedule []dto.ReportScheduleResponse
+		for _, reportScheduleAdvisor := range reportScheduleAdvisors {
+			// Create the base response
+			response := dto.ReportScheduleResponse{
+				ID:                   reportScheduleAdvisor.ID.String(),
+				UserID:               reportScheduleAdvisor.UserID,
+				RegistrationID:       reportScheduleAdvisor.RegistrationID,
+				AcademicAdvisorID:    reportScheduleAdvisor.AcademicAdvisorID,
+				AcademicAdvisorEmail: reportScheduleAdvisor.AcademicAdvisorEmail,
+				ReportType:           reportScheduleAdvisor.ReportType,
+				Week:                 reportScheduleAdvisor.Week,
+				StartDate:            reportScheduleAdvisor.StartDate.Format(time.RFC3339),
+				EndDate:              reportScheduleAdvisor.EndDate.Format(time.RFC3339),
 			}
+
+			// Only set Report if there are reports
+			if len(reportScheduleAdvisor.Report) > 0 {
+				response.Report = &dto.ReportResponse{
+					ID:                    reportScheduleAdvisor.Report[0].ID.String(),
+					ReportScheduleID:      reportScheduleAdvisor.ID.String(),
+					Title:                 reportScheduleAdvisor.Report[0].Title,
+					Content:               reportScheduleAdvisor.Report[0].Content,
+					ReportType:            reportScheduleAdvisor.Report[0].ReportType,
+					Feedback:              reportScheduleAdvisor.Report[0].Feedback,
+					AcademicAdvisorStatus: reportScheduleAdvisor.Report[0].AcademicAdvisorStatus,
+					FileStorageID:         reportScheduleAdvisor.Report[0].FileStorageID,
+				}
+			}
+
+			reportSchedule = append(reportSchedule, response)
 		}
-		reportScheduleResponses = append(reportScheduleResponses, reportScheduleResponse)
+		reportScheduleResponses[userName] = reportSchedule // Convert to string
 	}
 
-	return reportScheduleResponses, nil
+	return dto.ReportScheduleByAdvisorResponse{
+		Reports: reportScheduleResponses,
+	}, nil
 }
 
 func (s *reportScheduleService) ReportScheduleAccess(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (bool, error) {
@@ -258,7 +281,17 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 	}, nil
 }
 
-func (s *reportScheduleService) Update(ctx context.Context, id string, subject dto.ReportScheduleRequest) error {
+func (s *reportScheduleService) Update(ctx context.Context, id string, subject dto.ReportScheduleRequest, token string) error {
+
+	access, err := s.ReportScheduleAccess(ctx, subject, token)
+	if err != nil {
+		return err
+	}
+
+	if !access {
+		return errors.New("user role not allowed")
+	}
+
 	res, err := s.reportScheduleRepo.FindByID(ctx, id, nil)
 	if err != nil {
 		return err
@@ -355,8 +388,18 @@ func (s *reportScheduleService) FindByID(ctx context.Context, id string, token s
 }
 
 // Destroy deletes a report schedule
-func (s *reportScheduleService) Destroy(ctx context.Context, id string) error {
-	err := s.reportScheduleRepo.Destroy(ctx, id, nil)
+func (s *reportScheduleService) Destroy(ctx context.Context, id string, token string) error {
+
+	access, err := s.ReportScheduleAccess(ctx, dto.ReportScheduleRequest{}, token)
+	if err != nil {
+		return err
+	}
+
+	if !access {
+		return errors.New("user role not allowed")
+	}
+
+	err = s.reportScheduleRepo.Destroy(ctx, id, nil)
 	if err != nil {
 		return err
 	}
