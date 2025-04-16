@@ -10,16 +10,18 @@ import (
 
 func ReportRoutes(router *gin.Engine, reportController controller.ReportController, userManagementService service.UserManagementService) {
 	authMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN", "DOSEN PEMBIMBING", "MAHASISWA"})
+	adminMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN"})
 
 	reportRoutes := router.Group("/monitoring-service/api/v1/reports")
 	{
-		reportRoutes.GET("/", reportController.Index)
-		reportRoutes.GET("/:id", reportController.Show)
+		reportRoutes.GET("/", adminMiddleware, reportController.Index)
 		reportRoutes.GET("/report-schedules/:id/reports", reportController.FindByReportScheduleID)
+		// reportRoutes.GET("/approval", advisorMiddleware, reportController.Approval)
 
 		authorized := reportRoutes.Group("/")
 		authorized.Use(authMiddleware)
 		{
+			reportRoutes.GET("/:id", reportController.Show)
 			authorized.POST("/", reportController.Create)
 			authorized.PUT("/:id", reportController.Update)
 			authorized.DELETE("/:id", reportController.Destroy)

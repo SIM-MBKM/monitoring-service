@@ -25,7 +25,7 @@ type ReportService interface {
 	Index(ctx context.Context) ([]dto.ReportResponse, error)
 	Create(ctx context.Context, report dto.ReportRequest, file *multipart.FileHeader, token string) (dto.ReportResponse, error)
 	Update(ctx context.Context, id string, report dto.ReportRequest) error
-	FindByID(ctx context.Context, id string) (dto.ReportResponse, error)
+	FindByID(ctx context.Context, id string, token string) (dto.ReportResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string) ([]dto.ReportResponse, error)
 }
@@ -168,11 +168,61 @@ func (s *reportService) Update(ctx context.Context, id string, subject dto.Repor
 	return nil
 }
 
+func (s *reportService) ReportAccess(ctx context.Context, report dto.ReportRequest, token string) (bool, error) {
+	user := s.userManagementService.GetUserData("GET", token)
+
+	// get report schedule
+	reportSchedule, err := s.reportScheduleRepo.FindByID(ctx, report.ReportScheduleID, nil)
+	if err != nil {
+		return false, err
+	}
+
+	// convert userRole to string
+	userRole, ok := user["role"].(string)
+	if !ok {
+		return false, errors.New("user role not found")
+	}
+
+	if userRole == "DOSEN PEMBIMBING" {
+		userEmail, ok := user["email"].(string)
+		if !ok {
+			return false, errors.New("user email not found")
+		}
+
+		if userEmail != reportSchedule.AcademicAdvisorEmail {
+			return false, errors.New("user email not match")
+		}
+	} else if userRole == "MAHASISWA" {
+		userId, ok := user["id"].(string)
+		if !ok {
+			return false, errors.New("user id not found")
+		}
+
+		if userId != reportSchedule.UserID {
+			return false, errors.New("user id not match")
+		}
+	} else if userRole != "ADMIN" && userRole != "LO-MBKM" {
+		return false, errors.New("user role not allowed")
+	}
+
+	return true, nil
+}
+
 // FindByID retrieves a report by its ID
-func (s *reportService) FindByID(ctx context.Context, id string) (dto.ReportResponse, error) {
+func (s *reportService) FindByID(ctx context.Context, id string, token string) (dto.ReportResponse, error) {
+
 	report, err := s.reportRepo.FindByID(ctx, id, nil)
 	if err != nil {
 		return dto.ReportResponse{}, err
+	}
+
+	access, err := s.ReportAccess(ctx, dto.ReportRequest{ReportScheduleID: report.ReportScheduleID}, token)
+	if err != nil {
+		return dto.ReportResponse{}, err
+	}
+
+	if !access {
+		return dto.ReportResponse{}, errors.New("unauthorized")
 	}
 
 	return dto.ReportResponse{

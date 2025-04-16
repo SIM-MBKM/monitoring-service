@@ -30,8 +30,9 @@ func (c *ReportController) Index(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reports,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reports,
+		Message: "Reports fetched successfully",
 	})
 }
 
@@ -78,8 +79,9 @@ func (c *ReportController) Create(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   report,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    report,
+		Message: "Report created successfully",
 	})
 }
 
@@ -113,7 +115,8 @@ func (c *ReportController) Update(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report updated successfully",
 	})
 }
 
@@ -128,7 +131,17 @@ func (c *ReportController) Show(ctx *gin.Context) {
 		return
 	}
 
-	report, err := c.reportService.FindByID(ctx, id)
+	// get token from header
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	report, err := c.reportService.FindByID(ctx, id, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -138,8 +151,9 @@ func (c *ReportController) Show(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   report,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    report,
+		Message: "Report fetched successfully",
 	})
 }
 
@@ -164,7 +178,8 @@ func (c *ReportController) Destroy(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report deleted successfully",
 	})
 }
 
@@ -189,7 +204,8 @@ func (c *ReportController) FindByReportScheduleID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reports,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reports,
+		Message: "Reports fetched successfully",
 	})
 }
