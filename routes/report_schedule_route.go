@@ -17,9 +17,9 @@ func ReportScheduleRoutes(router *gin.Engine, reportScheduleController controlle
 	reportScheduleRoutes := router.Group("/monitoring-service/api/v1/report-schedules")
 	{
 		reportScheduleRoutes.GET("/", adminMiddleware, reportScheduleController.Index)
-		reportScheduleRoutes.GET("/:id", authMiddleware, reportScheduleController.Show)
 		reportScheduleRoutes.GET("/student", studentMiddleware, reportScheduleController.FindByStudentID)
 		reportScheduleRoutes.GET("/advisor", advisorMiddleware, reportScheduleController.FindByAdvisorEmail)
+		reportScheduleRoutes.GET("/:id", authMiddleware, reportScheduleController.Show)
 		reportScheduleRoutes.GET("/registrations/:id/report-schedules", reportScheduleController.FindByRegistrationID)
 
 		authorized := reportScheduleRoutes.Group("/")
