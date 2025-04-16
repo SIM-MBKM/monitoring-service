@@ -2,11 +2,16 @@ package dto
 
 type (
 	ReportRequest struct {
-		ReportScheduleID string `json:"report_schedule_id" validate:"required"`
-		Title            string `json:"title" validate:"required"`
-		Content          string `json:"content" validate:"required"`
-		ReportType       string `json:"report_type" validate:"required"`
-		Feedback         string `json:"feedback"`
+		ReportScheduleID string `form:"report_schedule_id" validate:"required"`
+		Title            string `form:"title" validate:"required"`
+		Content          string `form:"content" validate:"required"`
+		ReportType       string `form:"report_type" validate:"required"`
+	}
+
+	ReportUpdateRequest struct {
+		Title      string `form:"title" validate:"required"`
+		Content    string `form:"content" validate:"required"`
+		ReportType string `form:"report_type" validate:"required"`
 	}
 
 	ReportResponse struct {

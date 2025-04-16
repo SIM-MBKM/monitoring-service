@@ -82,6 +82,7 @@ func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userID stri
 	return reportSchedules, nil
 }
 
+// TODO: Add Pagination
 func (r *reportScheduleRepository) Index(ctx context.Context, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
 	if tx == nil {
 		tx = r.db

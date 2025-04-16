@@ -69,7 +69,7 @@ func (s *reportService) Create(ctx context.Context, report dto.ReportRequest, fi
 	var result *storageService.FileResponse
 	if file != nil {
 		var err error
-		result, err = s.fileService.storage.GcsUpload(file, "sim_mbkm", "report", "report")
+		result, err = s.fileService.storage.GcsUpload(file, "sim_mbkm", "", "")
 		if err != nil {
 			return dto.ReportResponse{}, err
 		}
@@ -95,7 +95,7 @@ func (s *reportService) Create(ctx context.Context, report dto.ReportRequest, fi
 	reportEntity.Title = report.Title
 	reportEntity.Content = report.Content
 	reportEntity.ReportType = report.ReportType
-	reportEntity.Feedback = report.Feedback
+	reportEntity.AcademicAdvisorStatus = "PENDING"
 
 	// Set timestamps
 	now := time.Now()

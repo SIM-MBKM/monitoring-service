@@ -38,7 +38,7 @@ func (c *ReportController) Index(ctx *gin.Context) {
 // Create handles POST /api/v1/reports
 func (c *ReportController) Create(ctx *gin.Context) {
 	var reportRequest dto.ReportRequest
-	if err := ctx.ShouldBindJSON(&reportRequest); err != nil {
+	if err := ctx.ShouldBind(&reportRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
