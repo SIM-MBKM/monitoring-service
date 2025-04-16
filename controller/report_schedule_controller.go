@@ -19,6 +19,57 @@ func NewReportScheduleController(reportScheduleService service.ReportScheduleSer
 	}
 }
 
+func (c *ReportScheduleController) FindByAdvisorEmail(ctx *gin.Context) {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	reportSchedules, err := c.reportScheduleService.FindByAdvisorEmail(ctx, token)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedules,
+	})
+}
+
+func (c *ReportScheduleController) FindByStudentID(ctx *gin.Context) {
+	// get token from header
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	reportSchedules, err := c.reportScheduleService.FindByUserID(ctx, token)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status: dto.STATUS_SUCCESS,
+		Data:   reportSchedules,
+	})
+}
+
 // Index handles GET /api/v1/report-schedules
 func (c *ReportScheduleController) Index(ctx *gin.Context) {
 	reportSchedules, err := c.reportScheduleService.Index(ctx)
@@ -118,7 +169,16 @@ func (c *ReportScheduleController) Show(ctx *gin.Context) {
 		return
 	}
 
-	reportSchedule, err := c.reportScheduleService.FindByID(ctx, id)
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	reportSchedule, err := c.reportScheduleService.FindByID(ctx, id, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

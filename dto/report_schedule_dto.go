@@ -24,4 +24,9 @@ type (
 		EndDate              string          `json:"end_date"`
 		Report               *ReportResponse `json:"report"`
 	}
+
+	ReportScheduleByAdvisorResponse struct {
+		AdvisorEmail string                              `json:"advisor_email"`
+		Reports      map[string][]ReportScheduleResponse `json:"reports"`
+	}
 )
