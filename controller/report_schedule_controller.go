@@ -39,8 +39,9 @@ func (c *ReportScheduleController) FindByAdvisorEmail(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedules,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reportSchedules,
+		Message: "Report schedule found successfully",
 	})
 }
 
@@ -65,8 +66,9 @@ func (c *ReportScheduleController) FindByStudentID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedules,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reportSchedules,
+		Message: "Report schedule found successfully",
 	})
 }
 
@@ -91,8 +93,9 @@ func (c *ReportScheduleController) Index(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedules,
+		Status:  dto.STATUS_SUCCESS,
+		Data:    reportSchedules,
+		Message: "Report schedule found successfully",
 	})
 }
 
@@ -172,7 +175,8 @@ func (c *ReportScheduleController) Update(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report schedule updated successfully",
 	})
 }
 
@@ -206,8 +210,9 @@ func (c *ReportScheduleController) Show(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedule,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report schedule found successfully",
+		Data:    reportSchedule,
 	})
 }
 
@@ -241,7 +246,8 @@ func (c *ReportScheduleController) Destroy(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report schedule deleted successfully",
 	})
 }
 
@@ -266,7 +272,8 @@ func (c *ReportScheduleController) FindByRegistrationID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status: dto.STATUS_SUCCESS,
-		Data:   reportSchedules,
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report schedule found successfully",
+		Data:    reportSchedules,
 	})
 }
