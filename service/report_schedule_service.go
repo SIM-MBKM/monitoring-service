@@ -54,7 +54,8 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 	for userID, reportScheduleAdvisors := range reportSchedules {
 		var reportSchedule []dto.ReportScheduleResponse
 		for _, reportScheduleAdvisor := range reportScheduleAdvisors {
-			reportSchedule = append(reportSchedule, dto.ReportScheduleResponse{
+			// Create the base response
+			response := dto.ReportScheduleResponse{
 				ID:                   reportScheduleAdvisor.ID.String(),
 				UserID:               reportScheduleAdvisor.UserID,
 				RegistrationID:       reportScheduleAdvisor.RegistrationID,
@@ -64,7 +65,11 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 				Week:                 reportScheduleAdvisor.Week,
 				StartDate:            reportScheduleAdvisor.StartDate.Format(time.RFC3339),
 				EndDate:              reportScheduleAdvisor.EndDate.Format(time.RFC3339),
-				Report: &dto.ReportResponse{
+			}
+
+			// Only set Report if there are reports
+			if len(reportScheduleAdvisor.Report) > 0 {
+				response.Report = &dto.ReportResponse{
 					ID:                    reportScheduleAdvisor.Report[0].ID.String(),
 					ReportScheduleID:      reportScheduleAdvisor.ID.String(),
 					Title:                 reportScheduleAdvisor.Report[0].Title,
@@ -73,10 +78,12 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 					Feedback:              reportScheduleAdvisor.Report[0].Feedback,
 					AcademicAdvisorStatus: reportScheduleAdvisor.Report[0].AcademicAdvisorStatus,
 					FileStorageID:         reportScheduleAdvisor.Report[0].FileStorageID,
-				},
-			})
+				}
+			}
+
+			reportSchedule = append(reportSchedule, response)
 		}
-		reportScheduleResponses[userID] = reportSchedule
+		reportScheduleResponses[userID] = reportSchedule // Convert to string
 	}
 
 	return dto.ReportScheduleByAdvisorResponse{
@@ -99,7 +106,7 @@ func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) 
 
 	var reportScheduleResponses []dto.ReportScheduleResponse
 	for _, reportSchedule := range reportSchedules {
-		reportScheduleResponses = append(reportScheduleResponses, dto.ReportScheduleResponse{
+		reportScheduleResponse := dto.ReportScheduleResponse{
 			ID:                   reportSchedule.ID.String(),
 			UserID:               reportSchedule.UserID,
 			RegistrationID:       reportSchedule.RegistrationID,
@@ -109,7 +116,10 @@ func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) 
 			Week:                 reportSchedule.Week,
 			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
 			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
-			Report: &dto.ReportResponse{
+		}
+
+		if len(reportSchedule.Report) > 0 {
+			reportScheduleResponse.Report = &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
 				Title:                 reportSchedule.Report[0].Title,
@@ -118,8 +128,9 @@ func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) 
 				Feedback:              reportSchedule.Report[0].Feedback,
 				AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
 				FileStorageID:         reportSchedule.Report[0].FileStorageID,
-			},
-		})
+			}
+		}
+		reportScheduleResponses = append(reportScheduleResponses, reportScheduleResponse)
 	}
 
 	return reportScheduleResponses, nil
@@ -134,7 +145,7 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 
 	var reportScheduleResponses []dto.ReportScheduleResponse
 	for _, reportSchedule := range reportSchedules {
-		reportScheduleResponses = append(reportScheduleResponses, dto.ReportScheduleResponse{
+		reportScheduleResponse := dto.ReportScheduleResponse{
 			ID:                   reportSchedule.ID.String(),
 			UserID:               reportSchedule.UserID,
 			RegistrationID:       reportSchedule.RegistrationID,
@@ -144,7 +155,10 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 			Week:                 reportSchedule.Week,
 			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
 			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
-			Report: &dto.ReportResponse{
+		}
+
+		if len(reportSchedule.Report) > 0 {
+			reportScheduleResponse.Report = &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
 				Title:                 reportSchedule.Report[0].Title,
@@ -153,8 +167,9 @@ func (s *reportScheduleService) Index(ctx context.Context) ([]dto.ReportSchedule
 				Feedback:              reportSchedule.Report[0].Feedback,
 				AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
 				FileStorageID:         reportSchedule.Report[0].FileStorageID,
-			},
-		})
+			}
+		}
+		reportScheduleResponses = append(reportScheduleResponses, reportScheduleResponse)
 	}
 
 	return reportScheduleResponses, nil
@@ -323,15 +338,17 @@ func (s *reportScheduleService) FindByID(ctx context.Context, id string, token s
 	reportScheduleResponse.StartDate = reportSchedule.StartDate.Format(time.RFC3339)
 	reportScheduleResponse.EndDate = reportSchedule.EndDate.Format(time.RFC3339)
 
-	reportScheduleResponse.Report = &dto.ReportResponse{
-		ID:                    reportSchedule.Report[0].ID.String(),
-		ReportScheduleID:      reportSchedule.ID.String(),
-		FileStorageID:         reportSchedule.Report[0].FileStorageID,
-		Title:                 reportSchedule.Report[0].Title,
-		Content:               reportSchedule.Report[0].Content,
-		ReportType:            reportSchedule.Report[0].ReportType,
-		Feedback:              reportSchedule.Report[0].Feedback,
-		AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
+	if len(reportSchedule.Report) > 0 {
+		reportScheduleResponse.Report = &dto.ReportResponse{
+			ID:                    reportSchedule.Report[0].ID.String(),
+			ReportScheduleID:      reportSchedule.ID.String(),
+			FileStorageID:         reportSchedule.Report[0].FileStorageID,
+			Title:                 reportSchedule.Report[0].Title,
+			Content:               reportSchedule.Report[0].Content,
+			ReportType:            reportSchedule.Report[0].ReportType,
+			Feedback:              reportSchedule.Report[0].Feedback,
+			AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
+		}
 	}
 
 	return reportScheduleResponse, nil
