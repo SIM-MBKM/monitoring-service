@@ -56,10 +56,14 @@ func (s *transcriptService) Index(ctx context.Context) ([]dto.TranscriptResponse
 	var transcriptResponses []dto.TranscriptResponse
 	for _, transcript := range transcripts {
 		transcriptResponses = append(transcriptResponses, dto.TranscriptResponse{
-			ID:             transcript.ID.String(),
-			RegistrationID: transcript.RegistrationID,
-			Title:          transcript.Title,
-			FileStorageID:  transcript.FileStorageID,
+			ID:                   transcript.ID.String(),
+			UserID:               transcript.UserID,
+			UserNRP:              transcript.UserNRP,
+			AcademicAdvisorID:    transcript.AcademicAdvisorID,
+			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+			RegistrationID:       transcript.RegistrationID,
+			Title:                transcript.Title,
+			FileStorageID:        transcript.FileStorageID,
 		})
 	}
 
@@ -100,6 +104,10 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 	// Create transcript entity
 	var transcriptEntity entity.Transcript
 	transcriptEntity.ID = uuid.New()
+	transcriptEntity.UserID = userID
+	transcriptEntity.UserNRP = registration["user_nrp"].(string)
+	transcriptEntity.AcademicAdvisorID = registration["academic_advisor_id"].(string)
+	transcriptEntity.AcademicAdvisorEmail = registration["academic_advisor_email"].(string)
 	transcriptEntity.RegistrationID = transcript.RegistrationID
 	transcriptEntity.Title = transcript.Title
 	transcriptEntity.FileStorageID = result.FileID
@@ -116,10 +124,14 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 	}
 
 	return dto.TranscriptResponse{
-		ID:             transcriptResponse.ID.String(),
-		RegistrationID: transcriptResponse.RegistrationID,
-		Title:          transcriptResponse.Title,
-		FileStorageID:  transcriptResponse.FileStorageID,
+		ID:                   transcriptResponse.ID.String(),
+		UserID:               transcriptResponse.UserID,
+		UserNRP:              transcriptResponse.UserNRP,
+		AcademicAdvisorID:    transcriptResponse.AcademicAdvisorID,
+		AcademicAdvisorEmail: transcriptResponse.AcademicAdvisorEmail,
+		RegistrationID:       transcriptResponse.RegistrationID,
+		Title:                transcriptResponse.Title,
+		FileStorageID:        transcriptResponse.FileStorageID,
 	}, nil
 }
 
@@ -184,10 +196,14 @@ func (s *transcriptService) FindByID(ctx context.Context, id string) (dto.Transc
 	}
 
 	return dto.TranscriptResponse{
-		ID:             transcript.ID.String(),
-		RegistrationID: transcript.RegistrationID,
-		Title:          transcript.Title,
-		FileStorageID:  transcript.FileStorageID,
+		ID:                   transcript.ID.String(),
+		UserID:               transcript.UserID,
+		UserNRP:              transcript.UserNRP,
+		AcademicAdvisorID:    transcript.AcademicAdvisorID,
+		AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+		RegistrationID:       transcript.RegistrationID,
+		Title:                transcript.Title,
+		FileStorageID:        transcript.FileStorageID,
 	}, nil
 }
 
@@ -211,10 +227,14 @@ func (s *transcriptService) FindByRegistrationID(ctx context.Context, registrati
 	var transcriptResponses []dto.TranscriptResponse
 	for _, transcript := range transcripts {
 		transcriptResponses = append(transcriptResponses, dto.TranscriptResponse{
-			ID:             transcript.ID.String(),
-			RegistrationID: transcript.RegistrationID,
-			Title:          transcript.Title,
-			FileStorageID:  transcript.FileStorageID,
+			ID:                   transcript.ID.String(),
+			UserID:               transcript.UserID,
+			UserNRP:              transcript.UserNRP,
+			AcademicAdvisorID:    transcript.AcademicAdvisorID,
+			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+			RegistrationID:       transcript.RegistrationID,
+			Title:                transcript.Title,
+			FileStorageID:        transcript.FileStorageID,
 		})
 	}
 

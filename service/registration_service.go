@@ -35,8 +35,13 @@ func (s *RegistrationManagementService) GetRegistrationByID(method string, id st
 
 	var registrationData map[string]interface{}
 	registrationData = map[string]interface{}{
-		"id":      registration["id"],
-		"user_id": registration["user_id"],
+		"id":                     registration["id"],
+		"user_id":                registration["user_id"],
+		"user_nrp":               registration["user_nrp"],
+		"user_name":              registration["user_name"],
+		"academic_advisor_name":  registration["academic_advisor_name"],
+		"academic_advisor_id":    registration["academic_advisor_id"],
+		"academic_advisor_email": registration["academic_advisor_email"],
 	}
 	return registrationData
 }

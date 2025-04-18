@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"monitoring-service/entity"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -125,7 +126,10 @@ func (r *transcriptRepository) Destroy(ctx context.Context, id string, tx *gorm.
 		}
 	}()
 
-	err = tx.Debug().Model(&entity.Transcript{}).Where("id = ?", id).Delete(&entity.Transcript{}).Error
+	err = tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("id = ?", id).
+		Update("deleted_at", time.Now()).Error
 	if err != nil {
 		return err
 	}
