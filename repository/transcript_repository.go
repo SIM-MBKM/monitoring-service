@@ -19,7 +19,7 @@ type TranscriptRepository interface {
 	Update(ctx context.Context, id string, transcript entity.Transcript, tx *gorm.DB) error
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.Transcript, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
-	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.Transcript, error)
+	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) (entity.Transcript, error)
 }
 
 func NewTranscriptRepository(db *gorm.DB) TranscriptRepository {
@@ -86,7 +86,11 @@ func (r *transcriptRepository) Update(ctx context.Context, id string, transcript
 		}
 	}()
 
-	err = tx.Debug().Model(&entity.Transcript{}).Where("id = ?", id).Updates(&transcript).Error
+	err = tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Updates(&transcript).Error
 	if err != nil {
 		return err
 	}
@@ -101,7 +105,11 @@ func (r *transcriptRepository) FindByID(ctx context.Context, id string, tx *gorm
 		tx = r.db.WithContext(ctx)
 	}
 
-	err := tx.Debug().Model(&entity.Transcript{}).Where("id = ?", id).First(&transcript).Error
+	err := tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		First(&transcript).Error
 	if err != nil {
 		return entity.Transcript{}, err
 	}
@@ -137,16 +145,21 @@ func (r *transcriptRepository) Destroy(ctx context.Context, id string, tx *gorm.
 	return nil
 }
 
-func (r *transcriptRepository) FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.Transcript, error) {
-	var transcripts []entity.Transcript
+func (r *transcriptRepository) FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) (entity.Transcript, error) {
+	var transcripts entity.Transcript
 
 	if tx == nil {
 		tx = r.db.WithContext(ctx)
 	}
 
-	err := tx.Debug().Model(&entity.Transcript{}).Where("registration_id = ?", registrationID).Find(&transcripts).Error
+	err := tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("registration_id = ?", registrationID).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		First(&transcripts).Error
 	if err != nil {
-		return nil, err
+		return entity.Transcript{}, err
 	}
 
 	return transcripts, nil

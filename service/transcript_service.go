@@ -27,7 +27,7 @@ type TranscriptService interface {
 	Update(ctx context.Context, id string, transcript dto.TranscriptRequest) error
 	FindByID(ctx context.Context, id string) (dto.TranscriptResponse, error)
 	Destroy(ctx context.Context, id string) error
-	FindByRegistrationID(ctx context.Context, registrationID string) ([]dto.TranscriptResponse, error)
+	FindByRegistrationID(ctx context.Context, registrationID string) (dto.TranscriptResponse, error)
 }
 
 func NewTranscriptService(
@@ -72,6 +72,15 @@ func (s *transcriptService) Index(ctx context.Context) ([]dto.TranscriptResponse
 
 // Create creates a new transcript
 func (s *transcriptService) Create(ctx context.Context, transcript dto.TranscriptRequest, file *multipart.FileHeader, token string) (dto.TranscriptResponse, error) {
+	transcriptCheck, err := s.transcriptRepo.FindByRegistrationID(ctx, transcript.RegistrationID, nil)
+	if err != nil {
+		return dto.TranscriptResponse{}, err
+	}
+
+	if transcriptCheck.ID != uuid.Nil {
+		return dto.TranscriptResponse{}, errors.New("transcript already exists")
+	}
+
 	if file == nil {
 		return dto.TranscriptResponse{}, errors.New("file is required")
 	}
@@ -218,24 +227,23 @@ func (s *transcriptService) Destroy(ctx context.Context, id string) error {
 }
 
 // FindByRegistrationID retrieves transcripts by registration ID
-func (s *transcriptService) FindByRegistrationID(ctx context.Context, registrationID string) ([]dto.TranscriptResponse, error) {
-	transcripts, err := s.transcriptRepo.FindByRegistrationID(ctx, registrationID, nil)
+func (s *transcriptService) FindByRegistrationID(ctx context.Context, registrationID string) (dto.TranscriptResponse, error) {
+	transcript, err := s.transcriptRepo.FindByRegistrationID(ctx, registrationID, nil)
 	if err != nil {
-		return nil, err
+		return dto.TranscriptResponse{}, err
 	}
 
-	var transcriptResponses []dto.TranscriptResponse
-	for _, transcript := range transcripts {
-		transcriptResponses = append(transcriptResponses, dto.TranscriptResponse{
-			ID:                   transcript.ID.String(),
-			UserID:               transcript.UserID,
-			UserNRP:              transcript.UserNRP,
-			AcademicAdvisorID:    transcript.AcademicAdvisorID,
-			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
-			RegistrationID:       transcript.RegistrationID,
-			Title:                transcript.Title,
-			FileStorageID:        transcript.FileStorageID,
-		})
+	var transcriptResponses dto.TranscriptResponse
+
+	transcriptResponses = dto.TranscriptResponse{
+		ID:                   transcript.ID.String(),
+		UserID:               transcript.UserID,
+		UserNRP:              transcript.UserNRP,
+		AcademicAdvisorID:    transcript.AcademicAdvisorID,
+		AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+		RegistrationID:       transcript.RegistrationID,
+		Title:                transcript.Title,
+		FileStorageID:        transcript.FileStorageID,
 	}
 
 	return transcriptResponses, nil
