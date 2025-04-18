@@ -28,6 +28,7 @@ type ReportService interface {
 	FindByID(ctx context.Context, id string, token string) (dto.ReportResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string) ([]dto.ReportResponse, error)
+	Approval(ctx context.Context, id string, token string, report dto.ReportApprovalRequest) error
 }
 
 func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo repository.ReportScheduleReposiotry, userManagementBaseURI string, asyncURIs []string, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
@@ -37,6 +38,38 @@ func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo
 		fileService:           NewFileService(config, tokenManager),
 		userManagementService: NewUserManagementService(userManagementBaseURI, asyncURIs),
 	}
+}
+
+func (s *reportService) Approval(ctx context.Context, id string, token string, report dto.ReportApprovalRequest) error {
+
+	reportEntity, err := s.reportRepo.FindByID(ctx, id, nil)
+	if err != nil {
+		return err
+	}
+
+	reportSchedule, err := s.reportScheduleRepo.FindByID(ctx, reportEntity.ReportScheduleID, nil)
+	if err != nil {
+		return err
+	}
+
+	advisor := s.userManagementService.GetUserData("GET", token)
+	advisorEmail, ok := advisor["email"].(string)
+	if !ok {
+		return errors.New("advisor email not found")
+	}
+
+	if advisorEmail != reportSchedule.AcademicAdvisorEmail {
+		return errors.New("unauthorized")
+	}
+	reportEntity.AcademicAdvisorStatus = report.Status
+	reportEntity.Feedback = report.Feedback
+
+	err = s.reportRepo.Approval(ctx, id, reportEntity, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Index retrieves all reports

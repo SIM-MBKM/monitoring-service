@@ -25,7 +25,10 @@ func InitializeAPI(db *gorm.DB, config *storage.Config, tokenManager *storage.Ca
 	reportController := ProvideReportController(reportService)
 	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, asyncURIs)
 	reportScheduleController := ProvideReportScheduleController(reportScheduleService)
-	application := newApplication(reportController, reportScheduleController)
+	transcriptRepository := ProvideTranscriptRepository(db)
+	transcriptService := ProvideTranscriptService(transcriptRepository, userManagementBaseURI, asyncURIs, config, tokenManager)
+	transcriptController := ProvideTranscriptController(transcriptService)
+	application := newApplication(reportController, reportScheduleController, transcriptController)
 	return application, nil
 }
 
@@ -35,15 +38,18 @@ func InitializeAPI(db *gorm.DB, config *storage.Config, tokenManager *storage.Ca
 type Application struct {
 	ReportController         controller.ReportController
 	ReportScheduleController controller.ReportScheduleController
+	TranscriptController     controller.TranscriptController
 }
 
 func newApplication(
 	reportController controller.ReportController,
 	reportScheduleController controller.ReportScheduleController,
+	transcriptController controller.TranscriptController,
 ) *Application {
 	return &Application{
 		ReportController:         reportController,
 		ReportScheduleController: reportScheduleController,
+		TranscriptController:     transcriptController,
 	}
 }
 
@@ -58,6 +64,10 @@ func ProvideReportRepository(db *gorm.DB) repository.ReportRepository {
 
 func ProvideReportScheduleRepository(db *gorm.DB) repository.ReportScheduleReposiotry {
 	return repository.NewReportScheduleRepository(db)
+}
+
+func ProvideTranscriptRepository(db *gorm.DB) repository.TranscriptRepository {
+	return repository.NewTranscriptRepository(db)
 }
 
 // Service providers
@@ -98,6 +108,22 @@ func ProvideReportScheduleService(
 	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, asyncURIs)
 }
 
+func ProvideTranscriptService(
+	transcriptRepo repository.TranscriptRepository,
+	userManagementBaseURI string,
+	asyncURIs []string,
+	config *storage.Config,
+	tokenManager *storage.CacheTokenManager,
+) service.TranscriptService {
+	return service.NewTranscriptService(
+		transcriptRepo,
+		userManagementBaseURI,
+		asyncURIs,
+		config,
+		tokenManager,
+	)
+}
+
 // Controller providers
 func ProvideReportController(reportService service.ReportService) controller.ReportController {
 	return *controller.NewReportController(reportService)
@@ -107,12 +133,17 @@ func ProvideReportScheduleController(reportScheduleService service.ReportSchedul
 	return *controller.NewReportScheduleController(reportScheduleService)
 }
 
+func ProvideTranscriptController(transcriptService service.TranscriptService) controller.TranscriptController {
+	return *controller.NewTranscriptController(transcriptService)
+}
+
 // Provider sets
 var (
 	RepositorySet = wire.NewSet(
 		ProvideBaseRepository,
 		ProvideReportRepository,
 		ProvideReportScheduleRepository,
+		ProvideTranscriptRepository,
 	)
 
 	ServiceSet = wire.NewSet(
@@ -120,11 +151,13 @@ var (
 		ProvideUserManagementService,
 		ProvideReportService,
 		ProvideReportScheduleService,
+		ProvideTranscriptService,
 	)
 
 	ControllerSet = wire.NewSet(
 		ProvideReportController,
 		ProvideReportScheduleController,
+		ProvideTranscriptController,
 	)
 
 	AllSet = wire.NewSet(

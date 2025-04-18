@@ -56,6 +56,7 @@ func main() {
 	// Setup routes for all controllers
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
 	routes.ReportScheduleRoutes(router, app.ReportScheduleController, *userManagementService)
+	routes.TranscriptRoutes(router, app.TranscriptController, *userManagementService)
 
 	// Start server
 	if port == "" {

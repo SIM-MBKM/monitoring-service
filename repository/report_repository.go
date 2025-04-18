@@ -19,6 +19,7 @@ type ReportRepository interface {
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.Report, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string, tx *gorm.DB) ([]entity.Report, error)
+	Approval(ctx context.Context, id string, report entity.Report, tx *gorm.DB) error
 }
 
 func NewReportRepository(db *gorm.DB) ReportRepository {
@@ -27,6 +28,29 @@ func NewReportRepository(db *gorm.DB) ReportRepository {
 		baseRepository: NewBaseRepository(db),
 	}
 }
+
+func (r *reportRepository) Approval(ctx context.Context, id string, report entity.Report, tx *gorm.DB) error {
+	tx, err := r.baseRepository.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			r.baseRepository.RollbackTx(ctx, tx)
+		} else {
+			_, err = r.baseRepository.CommitTx(ctx, tx)
+		}
+	}()
+
+	err = tx.Debug().Model(&entity.Report{}).Where("id = ?", id).Updates(&report).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *reportRepository) Index(ctx context.Context, tx *gorm.DB) ([]entity.Report, error) {
 	var reports []entity.Report
 

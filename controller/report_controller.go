@@ -18,6 +18,49 @@ func NewReportController(reportService service.ReportService) *ReportController 
 	}
 }
 
+func (c *ReportController) Approval(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "ID is required",
+		})
+		return
+	}
+
+	var reportApprovalRequest dto.ReportApprovalRequest
+	if err := ctx.ShouldBindJSON(&reportApprovalRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	err := c.reportService.Approval(ctx, id, token, reportApprovalRequest)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status:  dto.STATUS_SUCCESS,
+		Message: "Report approved successfully",
+	})
+}
+
 // Index handles GET /api/v1/reports
 func (c *ReportController) Index(ctx *gin.Context) {
 	reports, err := c.reportService.Index(ctx)

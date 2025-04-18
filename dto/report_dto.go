@@ -14,6 +14,11 @@ type (
 		ReportType string `form:"report_type" validate:"required"`
 	}
 
+	ReportApprovalRequest struct {
+		Status   string `json:"status" validate:"required"`
+		Feedback string `json:"feedback"`
+	}
+
 	ReportResponse struct {
 		ID                    string `json:"id"`
 		ReportScheduleID      string `json:"report_schedule_id"`
