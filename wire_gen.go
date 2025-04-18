@@ -10,6 +10,7 @@ import (
 	"github.com/SIM-MBKM/filestorage/storage"
 	"github.com/google/wire"
 	"gorm.io/gorm"
+	"monitoring-service/config"
 	"monitoring-service/controller"
 	"monitoring-service/repository"
 	"monitoring-service/service"
@@ -18,15 +19,15 @@ import (
 // Injectors from wire.go:
 
 // InitializeAPI creates the full application with all dependencies
-func InitializeAPI(db *gorm.DB, config *storage.Config, tokenManager *storage.CacheTokenManager, userManagementBaseURI string, asyncURIs []string) (*Application, error) {
+func InitializeAPI(db *gorm.DB, config2 *storage.Config, tokenManager *storage.CacheTokenManager, userManagementBaseURI string, registrationBaseURI config.RegistrationManagementbaseURI, asyncURIs []string) (*Application, error) {
 	reportRepository := ProvideReportRepository(db)
 	reportScheduleReposiotry := ProvideReportScheduleRepository(db)
-	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, asyncURIs, config, tokenManager)
+	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, asyncURIs, config2, tokenManager)
 	reportController := ProvideReportController(reportService)
 	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, asyncURIs)
 	reportScheduleController := ProvideReportScheduleController(reportScheduleService)
 	transcriptRepository := ProvideTranscriptRepository(db)
-	transcriptService := ProvideTranscriptService(transcriptRepository, userManagementBaseURI, asyncURIs, config, tokenManager)
+	transcriptService := ProvideTranscriptService(transcriptRepository, userManagementBaseURI, registrationBaseURI, asyncURIs, config2, tokenManager)
 	transcriptController := ProvideTranscriptController(transcriptService)
 	application := newApplication(reportController, reportScheduleController, transcriptController)
 	return application, nil
@@ -71,8 +72,8 @@ func ProvideTranscriptRepository(db *gorm.DB) repository.TranscriptRepository {
 }
 
 // Service providers
-func ProvideFileService(config *storage.Config, tokenManager *storage.CacheTokenManager) *service.FileService {
-	return service.NewFileService(config, tokenManager)
+func ProvideFileService(config2 *storage.Config, tokenManager *storage.CacheTokenManager) *service.FileService {
+	return service.NewFileService(config2, tokenManager)
 }
 
 func ProvideUserManagementService(
@@ -86,17 +87,14 @@ func ProvideReportService(
 	reportRepo repository.ReportRepository,
 	reportScheduleRepo repository.ReportScheduleReposiotry,
 	userManagementBaseURI string,
-	asyncURIs []string,
-	config *storage.Config,
+	asyncURIs []string, config2 *storage.Config,
 	tokenManager *storage.CacheTokenManager,
 ) service.ReportService {
 	return service.NewReportService(
 		reportRepo,
 		reportScheduleRepo,
 		userManagementBaseURI,
-		asyncURIs,
-		config,
-		tokenManager,
+		asyncURIs, config2, tokenManager,
 	)
 }
 
@@ -111,16 +109,15 @@ func ProvideReportScheduleService(
 func ProvideTranscriptService(
 	transcriptRepo repository.TranscriptRepository,
 	userManagementBaseURI string,
-	asyncURIs []string,
-	config *storage.Config,
+	registrationBaseURI config.RegistrationManagementbaseURI,
+	asyncURIs []string, config2 *storage.Config,
 	tokenManager *storage.CacheTokenManager,
 ) service.TranscriptService {
 	return service.NewTranscriptService(
 		transcriptRepo,
 		userManagementBaseURI,
-		asyncURIs,
-		config,
-		tokenManager,
+		string(registrationBaseURI),
+		asyncURIs, config2, tokenManager,
 	)
 }
 

@@ -10,4 +10,5 @@ type ActivityManagementbaseURI string
 
 type MatchingManagementbaseURI string
 
+type RegistrationManagementbaseURI string
 type AsyncURIs []string

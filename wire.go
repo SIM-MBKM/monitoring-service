@@ -4,6 +4,7 @@
 package main
 
 import (
+	"monitoring-service/config"
 	"monitoring-service/controller"
 	"monitoring-service/repository"
 	"monitoring-service/service"
@@ -90,6 +91,7 @@ func ProvideReportScheduleService(
 func ProvideTranscriptService(
 	transcriptRepo repository.TranscriptRepository,
 	userManagementBaseURI string,
+	registrationBaseURI config.RegistrationManagementbaseURI,
 	asyncURIs []string,
 	config *storageService.Config,
 	tokenManager *storageService.CacheTokenManager,
@@ -97,6 +99,7 @@ func ProvideTranscriptService(
 	return service.NewTranscriptService(
 		transcriptRepo,
 		userManagementBaseURI,
+		string(registrationBaseURI),
 		asyncURIs,
 		config,
 		tokenManager,
@@ -152,6 +155,7 @@ func InitializeAPI(
 	config *storageService.Config,
 	tokenManager *storageService.CacheTokenManager,
 	userManagementBaseURI string,
+	registrationBaseURI config.RegistrationManagementbaseURI,
 	asyncURIs []string,
 ) (*Application, error) {
 	wire.Build(

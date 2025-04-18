@@ -18,6 +18,7 @@ type transcriptService struct {
 	transcriptRepo        repository.TranscriptRepository
 	fileService           *FileService
 	userManagementService *UserManagementService
+	registrationService   *RegistrationManagementService
 }
 
 type TranscriptService interface {
@@ -32,6 +33,7 @@ type TranscriptService interface {
 func NewTranscriptService(
 	transcriptRepo repository.TranscriptRepository,
 	userManagementBaseURI string,
+	registrationBaseURI string,
 	asyncURIs []string,
 	config *storageService.Config,
 	tokenManager *storageService.CacheTokenManager,
@@ -40,6 +42,7 @@ func NewTranscriptService(
 		transcriptRepo:        transcriptRepo,
 		fileService:           NewFileService(config, tokenManager),
 		userManagementService: NewUserManagementService(userManagementBaseURI, asyncURIs),
+		registrationService:   NewRegistrationManagementService(registrationBaseURI, asyncURIs),
 	}
 }
 
@@ -81,6 +84,19 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 		return dto.TranscriptResponse{}, errors.New("unauthorized")
 	}
 
+	registration := s.registrationService.GetRegistrationByID("GET", transcript.RegistrationID, token)
+	if registration == nil {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
+	}
+
+	userID, ok := registration["user_id"].(string)
+	if !ok {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
+	}
+
+	if userID != user["id"] {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
+	}
 	// Create transcript entity
 	var transcriptEntity entity.Transcript
 	transcriptEntity.ID = uuid.New()
