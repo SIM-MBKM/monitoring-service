@@ -19,7 +19,7 @@ type ReportScheduleReposiotry interface {
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.ReportSchedule, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
-	FindByUserID(ctx context.Context, userID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
+	FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
 }
 
@@ -53,13 +53,13 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 	// Group them by user_id
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
 	for _, schedule := range allReportSchedules {
-		userReportSchedules[schedule.UserID] = append(userReportSchedules[schedule.UserID], schedule)
+		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
 	}
 
 	return userReportSchedules, nil
 }
 
-func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userID string, tx *gorm.DB) ([]entity.ReportSchedule, error) {
+func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error) {
 	var reportSchedules []entity.ReportSchedule
 
 	if tx == nil {
@@ -71,7 +71,7 @@ func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userID stri
 		Preload("Report", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
-		Where("user_id = ?", userID).
+		Where("user_id = ?", userNRP).
 		Where("deleted_at IS NULL").
 		Find(&reportSchedules).Error
 
@@ -104,7 +104,7 @@ func (r *reportScheduleRepository) Index(ctx context.Context, tx *gorm.DB) (map[
 	// Group them by user_id
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
 	for _, schedule := range allReportSchedules {
-		userReportSchedules[schedule.UserID] = append(userReportSchedules[schedule.UserID], schedule)
+		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
 	}
 
 	return userReportSchedules, nil

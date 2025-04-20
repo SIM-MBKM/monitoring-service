@@ -18,6 +18,32 @@ func NewTranscriptController(transcriptService service.TranscriptService) *Trans
 	}
 }
 
+func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	transcripts, err := c.transcriptService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status:  dto.STATUS_SUCCESS,
+		Data:    transcripts,
+		Message: "Transcripts fetched successfully",
+	})
+}
+
 // Index handles GET /api/v1/transcripts
 func (c *TranscriptController) Index(ctx *gin.Context) {
 	transcripts, err := c.transcriptService.Index(ctx)
@@ -127,7 +153,16 @@ func (c *TranscriptController) Show(ctx *gin.Context) {
 		return
 	}
 
-	transcript, err := c.transcriptService.FindByID(ctx, id)
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+
+	transcript, err := c.transcriptService.FindByID(ctx, id, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

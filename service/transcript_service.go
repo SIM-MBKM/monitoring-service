@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"mime/multipart"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
@@ -25,9 +26,10 @@ type TranscriptService interface {
 	Index(ctx context.Context) ([]dto.TranscriptResponse, error)
 	Create(ctx context.Context, transcript dto.TranscriptRequest, file *multipart.FileHeader, token string) (dto.TranscriptResponse, error)
 	Update(ctx context.Context, id string, transcript dto.TranscriptRequest) error
-	FindByID(ctx context.Context, id string) (dto.TranscriptResponse, error)
+	FindByID(ctx context.Context, id string, token string) (dto.TranscriptResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) (dto.TranscriptResponse, error)
+	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.TranscriptAdvisorResponse, error)
 }
 
 func NewTranscriptService(
@@ -44,6 +46,37 @@ func NewTranscriptService(
 		userManagementService: NewUserManagementService(userManagementBaseURI, asyncURIs),
 		registrationService:   NewRegistrationManagementService(registrationBaseURI, asyncURIs),
 	}
+}
+
+func (s *transcriptService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.TranscriptAdvisorResponse, error) {
+	user := s.userManagementService.GetUserData("GET", token)
+	advisorEmail, ok := user["email"].(string)
+	if !ok {
+		return dto.TranscriptAdvisorResponse{}, errors.New("advisor email not found")
+	}
+
+	transcripts, err := s.transcriptRepo.FindByAdvisorEmailAndGroupByUserNRP(ctx, advisorEmail, nil)
+	if err != nil {
+		return dto.TranscriptAdvisorResponse{}, err
+	}
+
+	transcriptResponses := make(map[string][]dto.TranscriptResponse)
+	for userNRP, transcript := range transcripts {
+		transcriptResponses[userNRP] = append(transcriptResponses[userNRP], dto.TranscriptResponse{
+			ID:                   transcript.ID.String(),
+			UserID:               transcript.UserID,
+			UserNRP:              transcript.UserNRP,
+			AcademicAdvisorID:    transcript.AcademicAdvisorID,
+			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+			RegistrationID:       transcript.RegistrationID,
+			Title:                transcript.Title,
+			FileStorageID:        transcript.FileStorageID,
+		})
+	}
+
+	return dto.TranscriptAdvisorResponse{
+		Transcripts: transcriptResponses,
+	}, nil
 }
 
 // Index retrieves all transcripts
@@ -74,7 +107,9 @@ func (s *transcriptService) Index(ctx context.Context) ([]dto.TranscriptResponse
 func (s *transcriptService) Create(ctx context.Context, transcript dto.TranscriptRequest, file *multipart.FileHeader, token string) (dto.TranscriptResponse, error) {
 	transcriptCheck, err := s.transcriptRepo.FindByRegistrationID(ctx, transcript.RegistrationID, nil)
 	if err != nil {
-		return dto.TranscriptResponse{}, err
+		if err.Error() != "record not found" {
+			return dto.TranscriptResponse{}, err
+		}
 	}
 
 	if transcriptCheck.ID != uuid.Nil {
@@ -94,11 +129,13 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 	// Verify user has access to this registration
 	user := s.userManagementService.GetUserData("GET", token)
 	if user == nil {
+		log.Println("ERROR GETTING USER DATA: ", err)
 		return dto.TranscriptResponse{}, errors.New("unauthorized")
 	}
 
 	registration := s.registrationService.GetRegistrationByID("GET", transcript.RegistrationID, token)
 	if registration == nil {
+		log.Println("ERROR GETTING REGISTRATION: ", err)
 		return dto.TranscriptResponse{}, errors.New("unauthorized")
 	}
 
@@ -108,6 +145,7 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 	}
 
 	if userID != user["id"] {
+		log.Println("USER ID DOES NOT MATCH: ", userID, user["id"])
 		return dto.TranscriptResponse{}, errors.New("unauthorized")
 	}
 	// Create transcript entity
@@ -115,7 +153,7 @@ func (s *transcriptService) Create(ctx context.Context, transcript dto.Transcrip
 	transcriptEntity.ID = uuid.New()
 	transcriptEntity.UserID = userID
 	transcriptEntity.UserNRP = registration["user_nrp"].(string)
-	transcriptEntity.AcademicAdvisorID = registration["academic_advisor_id"].(string)
+	transcriptEntity.AcademicAdvisorID = registration["academic_advisor"].(string)
 	transcriptEntity.AcademicAdvisorEmail = registration["academic_advisor_email"].(string)
 	transcriptEntity.RegistrationID = transcript.RegistrationID
 	transcriptEntity.Title = transcript.Title
@@ -198,10 +236,32 @@ func (s *transcriptService) Update(ctx context.Context, id string, subject dto.T
 }
 
 // FindByID retrieves a transcript by its ID
-func (s *transcriptService) FindByID(ctx context.Context, id string) (dto.TranscriptResponse, error) {
+func (s *transcriptService) FindByID(ctx context.Context, id string, token string) (dto.TranscriptResponse, error) {
 	transcript, err := s.transcriptRepo.FindByID(ctx, id, nil)
 	if err != nil {
 		return dto.TranscriptResponse{}, err
+	}
+
+	user := s.userManagementService.GetUserData("GET", token)
+	if user == nil {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
+	}
+
+	userRole, ok := user["role"].(string)
+	if !ok {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
+	}
+
+	if userRole == "DOSEN PEMBIMBING" {
+		if transcript.AcademicAdvisorEmail != user["email"] {
+			return dto.TranscriptResponse{}, errors.New("unauthorized")
+		}
+	} else if userRole == "MAHASISWA" {
+		if transcript.UserNRP != user["nrp"] {
+			return dto.TranscriptResponse{}, errors.New("unauthorized")
+		}
+	} else if userRole != "ADMIN" && userRole != "LO-MBKM" {
+		return dto.TranscriptResponse{}, errors.New("unauthorized")
 	}
 
 	return dto.TranscriptResponse{

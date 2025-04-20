@@ -16,4 +16,8 @@ type (
 		Title                string `json:"title"`
 		FileStorageID        string `json:"file_storage_id"`
 	}
+
+	TranscriptAdvisorResponse struct {
+		Transcripts map[string][]TranscriptResponse `json:"transcripts"`
+	}
 )

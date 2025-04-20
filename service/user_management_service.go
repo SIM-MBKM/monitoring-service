@@ -101,6 +101,7 @@ func (s *UserManagementService) GetUserByFilter(data map[string]interface{}, met
 
 func (s *UserManagementService) GetUserRole(method string, token string) map[string]interface{} {
 	res, err := s.baseService.Request(method, GET_USER_ROLE_ENDPOINT, nil, token)
+	log.Println("RESPONSE GET USER ROLE", res)
 	if err != nil {
 		return nil
 	}

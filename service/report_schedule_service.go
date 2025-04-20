@@ -54,9 +54,9 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 	for userID, reportScheduleAdvisors := range reportSchedules {
 		// get user by user id
 		user := s.userManagementService.GetUserByID("GET", token, userID)
-		userName, ok := user["name"].(string)
+		userNRP, ok := user["nrp"].(string)
 		if !ok {
-			return dto.ReportScheduleByAdvisorResponse{}, errors.New("user name not found")
+			return dto.ReportScheduleByAdvisorResponse{}, errors.New("user nrp not found")
 		}
 
 		var reportSchedule []dto.ReportScheduleResponse
@@ -65,6 +65,7 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 			response := dto.ReportScheduleResponse{
 				ID:                   reportScheduleAdvisor.ID.String(),
 				UserID:               reportScheduleAdvisor.UserID,
+				UserNRP:              reportScheduleAdvisor.UserNRP,
 				RegistrationID:       reportScheduleAdvisor.RegistrationID,
 				AcademicAdvisorID:    reportScheduleAdvisor.AcademicAdvisorID,
 				AcademicAdvisorEmail: reportScheduleAdvisor.AcademicAdvisorEmail,
@@ -90,7 +91,7 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 
 			reportSchedule = append(reportSchedule, response)
 		}
-		reportScheduleResponses[userName] = reportSchedule // Convert to string
+		reportScheduleResponses[userNRP] = reportSchedule // Convert to string
 	}
 
 	return dto.ReportScheduleByAdvisorResponse{
@@ -100,12 +101,13 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 
 func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) ([]dto.ReportScheduleResponse, error) {
 	user := s.userManagementService.GetUserData("GET", token)
-	userID, ok := user["id"].(string)
+
+	userNRP, ok := user["nrp"].(string)
 	if !ok {
-		return nil, errors.New("user ID not found")
+		return nil, errors.New("user NRP not found")
 	}
 
-	reportSchedules, err := s.reportScheduleRepo.FindByUserID(ctx, userID, nil)
+	reportSchedules, err := s.reportScheduleRepo.FindByUserID(ctx, userNRP, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +117,7 @@ func (s *reportScheduleService) FindByUserID(ctx context.Context, token string) 
 		reportScheduleResponse := dto.ReportScheduleResponse{
 			ID:                   reportSchedule.ID.String(),
 			UserID:               reportSchedule.UserID,
+			UserNRP:              reportSchedule.UserNRP,
 			RegistrationID:       reportSchedule.RegistrationID,
 			AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
 			AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
@@ -165,6 +168,7 @@ func (s *reportScheduleService) Index(ctx context.Context, token string) (dto.Re
 			response := dto.ReportScheduleResponse{
 				ID:                   reportScheduleAdvisor.ID.String(),
 				UserID:               reportScheduleAdvisor.UserID,
+				UserNRP:              reportScheduleAdvisor.UserNRP,
 				RegistrationID:       reportScheduleAdvisor.RegistrationID,
 				AcademicAdvisorID:    reportScheduleAdvisor.AcademicAdvisorID,
 				AcademicAdvisorEmail: reportScheduleAdvisor.AcademicAdvisorEmail,
@@ -238,6 +242,7 @@ func (s *reportScheduleService) Create(ctx context.Context, reportSchedule dto.R
 	var reportScheduleEntity entity.ReportSchedule
 	reportScheduleEntity.ID = uuid.New()
 	reportScheduleEntity.UserID = reportSchedule.UserID
+	reportScheduleEntity.UserNRP = reportSchedule.UserNRP
 	reportScheduleEntity.RegistrationID = reportSchedule.RegistrationID
 	reportScheduleEntity.AcademicAdvisorID = reportSchedule.AcademicAdvisorID
 	reportScheduleEntity.AcademicAdvisorEmail = reportSchedule.AcademicAdvisorEmail
