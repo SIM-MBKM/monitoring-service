@@ -20,6 +20,7 @@ type ReportScheduleReposiotry interface {
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error)
+	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
 	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
 }
 
@@ -28,6 +29,31 @@ func NewReportScheduleRepository(db *gorm.DB) ReportScheduleReposiotry {
 		db:             db,
 		baseRepository: NewBaseRepository(db),
 	}
+}
+
+func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
+	if tx == nil {
+		tx = r.db.WithContext(ctx)
+	}
+
+	var reportSchedules []entity.ReportSchedule
+	err := tx.Debug().
+		Model(&entity.ReportSchedule{}).
+		Where("user_nrp = ?", userNRP).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&reportSchedules).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	userReportSchedules := make(map[string][]entity.ReportSchedule)
+	for _, schedule := range reportSchedules {
+		userReportSchedules[schedule.RegistrationID] = append(userReportSchedules[schedule.RegistrationID], schedule)
+	}
+
+	return userReportSchedules, nil
 }
 
 func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
@@ -71,7 +97,7 @@ func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userNRP str
 		Preload("Report", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
-		Where("user_id = ?", userNRP).
+		Where("user_nrp = ?", userNRP).
 		Where("deleted_at IS NULL").
 		Find(&reportSchedules).Error
 

@@ -83,9 +83,10 @@ func ProvideReportService(
 func ProvideReportScheduleService(
 	reportScheduleRepo repository.ReportScheduleReposiotry,
 	userManagementBaseURI string,
+	registrationBaseURI config.RegistrationManagementbaseURI,
 	asyncURIs []string,
 ) service.ReportScheduleService {
-	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, asyncURIs)
+	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, string(registrationBaseURI), asyncURIs)
 }
 
 func ProvideTranscriptService(

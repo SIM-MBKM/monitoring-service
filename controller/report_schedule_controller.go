@@ -56,7 +56,7 @@ func (c *ReportScheduleController) FindByStudentID(ctx *gin.Context) {
 		return
 	}
 
-	reportSchedules, err := c.reportScheduleService.FindByUserID(ctx, token)
+	reportSchedules, err := c.reportScheduleService.FindByUserNRPAndGroupByRegistrationID(ctx, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

@@ -16,6 +16,7 @@ import (
 type reportScheduleService struct {
 	reportScheduleRepo    repository.ReportScheduleReposiotry
 	userManagementService *UserManagementService
+	registrationService   *RegistrationManagementService
 }
 
 type ReportScheduleService interface {
@@ -28,13 +29,77 @@ type ReportScheduleService interface {
 	ReportScheduleAccess(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (bool, error)
 	FindByUserID(ctx context.Context, token string) ([]dto.ReportScheduleResponse, error)
 	FindByAdvisorEmail(ctx context.Context, token string) (dto.ReportScheduleByAdvisorResponse, error)
+	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.ReportScheduleByStudentResponse, error)
 }
 
-func NewReportScheduleService(reportScheduleRepo repository.ReportScheduleReposiotry, userManagementbaseURI string, asyncURIs []string) ReportScheduleService {
+func NewReportScheduleService(reportScheduleRepo repository.ReportScheduleReposiotry, userManagementbaseURI string, registrationManagementbaseURI string, asyncURIs []string) ReportScheduleService {
 	return &reportScheduleService{
 		reportScheduleRepo:    reportScheduleRepo,
 		userManagementService: NewUserManagementService(userManagementbaseURI, asyncURIs),
+		registrationService:   NewRegistrationManagementService(registrationManagementbaseURI, asyncURIs),
 	}
+}
+
+func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.ReportScheduleByStudentResponse, error) {
+	user := s.userManagementService.GetUserData("GET", token)
+
+	userNRP, ok := user["nrp"].(string)
+	if !ok {
+		return dto.ReportScheduleByStudentResponse{}, errors.New("user NRP not found")
+	}
+
+	reportSchedules, err := s.reportScheduleRepo.FindByUserNRPAndGroupByRegistrationID(ctx, userNRP, nil)
+	if err != nil {
+		return dto.ReportScheduleByStudentResponse{}, err
+	}
+
+	reportScheduleResponses := make(map[string][]dto.ReportScheduleResponse)
+
+	for registrationID, reportSchedules := range reportSchedules {
+		registration := s.registrationService.GetRegistrationByID("GET", registrationID, token)
+		registrationActivityName, ok := registration["activity_name"].(string)
+		if !ok {
+			return dto.ReportScheduleByStudentResponse{}, errors.New("registration activity name not found")
+		}
+		var reportScheduleResponse []dto.ReportScheduleResponse
+		for _, reportSchedule := range reportSchedules {
+
+			response := dto.ReportScheduleResponse{
+				ID:                   reportSchedule.ID.String(),
+				UserID:               reportSchedule.UserID,
+				UserNRP:              reportSchedule.UserNRP,
+				ActivityName:         registrationActivityName,
+				RegistrationID:       reportSchedule.RegistrationID,
+				AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
+				AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
+				ReportType:           reportSchedule.ReportType,
+				Week:                 reportSchedule.Week,
+				StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
+				EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
+			}
+
+			if len(reportSchedule.Report) > 0 {
+				response.Report = &dto.ReportResponse{
+					ID:                    reportSchedule.Report[0].ID.String(),
+					ReportScheduleID:      reportSchedule.ID.String(),
+					Title:                 reportSchedule.Report[0].Title,
+					Content:               reportSchedule.Report[0].Content,
+					ReportType:            reportSchedule.Report[0].ReportType,
+					Feedback:              reportSchedule.Report[0].Feedback,
+					AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
+					FileStorageID:         reportSchedule.Report[0].FileStorageID,
+				}
+			}
+
+			reportScheduleResponse = append(reportScheduleResponse, response)
+		}
+
+		reportScheduleResponses[registrationActivityName] = reportScheduleResponse
+	}
+
+	return dto.ReportScheduleByStudentResponse{
+		Reports: reportScheduleResponses,
+	}, nil
 }
 
 func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token string) (dto.ReportScheduleByAdvisorResponse, error) {

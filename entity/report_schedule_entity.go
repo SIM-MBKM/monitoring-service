@@ -12,6 +12,7 @@ type (
 		UserID               string     `json:"user_id"`
 		UserNRP              string     `json:"user_nrp"`
 		RegistrationID       string     `json:"registration_id"`
+		ActivityName         string     `json:"activity_name"`
 		AcademicAdvisorID    string     `json:"academic_advisor_id"`
 		AcademicAdvisorEmail string     `json:"academic_advisor_email"`
 		ReportType           string     `json:"report_type"`

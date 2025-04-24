@@ -24,7 +24,7 @@ func InitializeAPI(db *gorm.DB, config2 *storage.Config, tokenManager *storage.C
 	reportScheduleReposiotry := ProvideReportScheduleRepository(db)
 	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, asyncURIs, config2, tokenManager)
 	reportController := ProvideReportController(reportService)
-	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, asyncURIs)
+	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, registrationBaseURI, asyncURIs)
 	reportScheduleController := ProvideReportScheduleController(reportScheduleService)
 	transcriptRepository := ProvideTranscriptRepository(db)
 	transcriptService := ProvideTranscriptService(transcriptRepository, userManagementBaseURI, registrationBaseURI, asyncURIs, config2, tokenManager)
@@ -101,9 +101,10 @@ func ProvideReportService(
 func ProvideReportScheduleService(
 	reportScheduleRepo repository.ReportScheduleReposiotry,
 	userManagementBaseURI string,
+	registrationBaseURI config.RegistrationManagementbaseURI,
 	asyncURIs []string,
 ) service.ReportScheduleService {
-	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, asyncURIs)
+	return service.NewReportScheduleService(reportScheduleRepo, userManagementBaseURI, string(registrationBaseURI), asyncURIs)
 }
 
 func ProvideTranscriptService(

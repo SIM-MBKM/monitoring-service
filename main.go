@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"monitoring-service/config"
+	"monitoring-service/middleware"
 	"monitoring-service/routes"
 	"monitoring-service/service"
 
@@ -54,6 +55,9 @@ func main() {
 
 	// Setup Gin router
 	router := gin.Default()
+
+	// add cors
+	router.Use(middleware.CORS())
 
 	// Setup routes for all controllers
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
