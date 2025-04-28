@@ -1,12 +1,12 @@
 package dto
 
 type (
-	TranscriptRequest struct {
+	SyllabusRequest struct {
 		RegistrationID string `form:"registration_id" validate:"required"`
 		Title          string `form:"title" validate:"required"`
 	}
 
-	TranscriptResponse struct {
+	SyllabusResponse struct {
 		ID                   string `json:"id"`
 		UserID               string `json:"user_id"`
 		UserNRP              string `json:"user_nrp"`
@@ -17,11 +17,11 @@ type (
 		FileStorageID        string `json:"file_storage_id"`
 	}
 
-	TranscriptAdvisorResponse struct {
-		Transcripts map[string][]TranscriptResponse `json:"transcripts"`
+	SyllabusAdvisorResponse struct {
+		Syllabuses map[string][]SyllabusResponse `json:"syllabuses"`
 	}
 
-	TranscriptByStudentResponse struct {
-		Transcripts map[string][]TranscriptResponse `json:"transcripts"`
+	SyllabusByStudentResponse struct {
+		Syllabuses map[string][]SyllabusResponse `json:"syllabuses"`
 	}
 )

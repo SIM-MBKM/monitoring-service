@@ -8,17 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type TranscriptController struct {
-	transcriptService service.TranscriptService
+type SyllabusController struct {
+	syllabusService service.SyllabusService
 }
 
-func NewTranscriptController(transcriptService service.TranscriptService) *TranscriptController {
-	return &TranscriptController{
-		transcriptService: transcriptService,
+func NewSyllabusController(syllabusService service.SyllabusService) *SyllabusController {
+	return &SyllabusController{
+		syllabusService: syllabusService,
 	}
 }
 
-func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
+func (c *SyllabusController) FindByAdvisorEmail(ctx *gin.Context) {
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
@@ -28,7 +28,7 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 		return
 	}
 
-	transcripts, err := c.transcriptService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token)
+	syllabuses, err := c.syllabusService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -39,14 +39,14 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "Transcripts fetched successfully",
+		Data:    syllabuses,
+		Message: "Syllabuses fetched successfully",
 	})
 }
 
-// Index handles GET /api/v1/transcripts
-func (c *TranscriptController) Index(ctx *gin.Context) {
-	transcripts, err := c.transcriptService.Index(ctx)
+// Index handles GET /api/v1/syllabuses
+func (c *SyllabusController) Index(ctx *gin.Context) {
+	syllabuses, err := c.syllabusService.Index(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -57,15 +57,15 @@ func (c *TranscriptController) Index(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "Transcripts fetched successfully",
+		Data:    syllabuses,
+		Message: "Syllabuses fetched successfully",
 	})
 }
 
-// Create handles POST /api/v1/transcripts
-func (c *TranscriptController) Create(ctx *gin.Context) {
-	var transcriptRequest dto.TranscriptRequest
-	if err := ctx.ShouldBind(&transcriptRequest); err != nil {
+// Create handles POST /api/v1/syllabuses
+func (c *SyllabusController) Create(ctx *gin.Context) {
+	var syllabusRequest dto.SyllabusRequest
+	if err := ctx.ShouldBind(&syllabusRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
@@ -91,7 +91,7 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 		return
 	}
 
-	transcript, err := c.transcriptService.Create(ctx, transcriptRequest, file, token)
+	syllabus, err := c.syllabusService.Create(ctx, syllabusRequest, file, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -102,13 +102,13 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcript,
-		Message: "Transcript created successfully",
+		Data:    syllabus,
+		Message: "Syllabus created successfully",
 	})
 }
 
-// Update handles PUT /api/v1/transcripts/:id
-func (c *TranscriptController) Update(ctx *gin.Context) {
+// Update handles PUT /api/v1/syllabuses/:id
+func (c *SyllabusController) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -118,8 +118,8 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 		return
 	}
 
-	var transcriptRequest dto.TranscriptRequest
-	if err := ctx.ShouldBindJSON(&transcriptRequest); err != nil {
+	var syllabusRequest dto.SyllabusRequest
+	if err := ctx.ShouldBindJSON(&syllabusRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
@@ -127,7 +127,7 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 		return
 	}
 
-	err := c.transcriptService.Update(ctx, id, transcriptRequest)
+	err := c.syllabusService.Update(ctx, id, syllabusRequest)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -138,12 +138,12 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Message: "Transcript updated successfully",
+		Message: "Syllabus updated successfully",
 	})
 }
 
-// Show handles GET /api/v1/transcripts/:id
-func (c *TranscriptController) Show(ctx *gin.Context) {
+// Show handles GET /api/v1/syllabuses/:id
+func (c *SyllabusController) Show(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -162,7 +162,7 @@ func (c *TranscriptController) Show(ctx *gin.Context) {
 		return
 	}
 
-	transcript, err := c.transcriptService.FindByID(ctx, id, token)
+	syllabus, err := c.syllabusService.FindByID(ctx, id, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -173,13 +173,13 @@ func (c *TranscriptController) Show(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcript,
-		Message: "Transcript fetched successfully",
+		Data:    syllabus,
+		Message: "Syllabus fetched successfully",
 	})
 }
 
-// Destroy handles DELETE /api/v1/transcripts/:id
-func (c *TranscriptController) Destroy(ctx *gin.Context) {
+// Destroy handles DELETE /api/v1/syllabuses/:id
+func (c *SyllabusController) Destroy(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -189,7 +189,7 @@ func (c *TranscriptController) Destroy(ctx *gin.Context) {
 		return
 	}
 
-	err := c.transcriptService.Destroy(ctx, id)
+	err := c.syllabusService.Destroy(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -200,12 +200,12 @@ func (c *TranscriptController) Destroy(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Message: "Transcript deleted successfully",
+		Message: "Syllabus deleted successfully",
 	})
 }
 
-// FindByRegistrationID handles GET /api/v1/registrations/:id/transcripts
-func (c *TranscriptController) FindByRegistrationID(ctx *gin.Context) {
+// FindByRegistrationID handles GET /api/v1/registrations/:id/syllabuses
+func (c *SyllabusController) FindByRegistrationID(ctx *gin.Context) {
 	registrationID := ctx.Param("id")
 	if registrationID == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -215,7 +215,7 @@ func (c *TranscriptController) FindByRegistrationID(ctx *gin.Context) {
 		return
 	}
 
-	transcripts, err := c.transcriptService.FindByRegistrationID(ctx, registrationID)
+	syllabuses, err := c.syllabusService.FindByRegistrationID(ctx, registrationID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -226,12 +226,39 @@ func (c *TranscriptController) FindByRegistrationID(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "Transcripts fetched successfully",
+		Data:    syllabuses,
+		Message: "Syllabus fetched successfully",
 	})
 }
 
-func (c *TranscriptController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Context) {
+// FindAllByRegistrationID handles GET /api/v1/syllabuses/registrations/:id
+func (c *SyllabusController) FindAllByRegistrationID(ctx *gin.Context) {
+	registrationID := ctx.Param("id")
+	if registrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+
+	syllabuses, err := c.syllabusService.FindAllByRegistrationID(ctx, registrationID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.Response{
+		Status:  dto.STATUS_SUCCESS,
+		Data:    syllabuses,
+		Message: "All syllabuses for registration fetched successfully",
+	})
+}
+
+func (c *SyllabusController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Context) {
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
@@ -241,7 +268,7 @@ func (c *TranscriptController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Co
 		return
 	}
 
-	transcripts, err := c.transcriptService.FindByUserNRPAndGroupByRegistrationID(ctx, token)
+	syllabuses, err := c.syllabusService.FindByUserNRPAndGroupByRegistrationID(ctx, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -252,34 +279,7 @@ func (c *TranscriptController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Co
 
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "Student transcripts fetched successfully",
-	})
-}
-
-// FindAllByRegistrationID handles GET /api/v1/transcripts/registrations/:id
-func (c *TranscriptController) FindAllByRegistrationID(ctx *gin.Context) {
-	registrationID := ctx.Param("id")
-	if registrationID == "" {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "Registration ID is required",
-		})
-		return
-	}
-
-	transcripts, err := c.transcriptService.FindAllByRegistrationID(ctx, registrationID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, dto.Response{
-		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "All transcripts for registration fetched successfully",
+		Data:    syllabuses,
+		Message: "Student syllabuses fetched successfully",
 	})
 }

@@ -63,6 +63,7 @@ func main() {
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
 	routes.ReportScheduleRoutes(router, app.ReportScheduleController, *userManagementService)
 	routes.TranscriptRoutes(router, app.TranscriptController, *userManagementService)
+	routes.SyllabusRoutes(router, app.SyllabusController, *userManagementService)
 
 	// Start server
 	if port == "" {

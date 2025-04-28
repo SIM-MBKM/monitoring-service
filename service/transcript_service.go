@@ -29,7 +29,9 @@ type TranscriptService interface {
 	FindByID(ctx context.Context, id string, token string) (dto.TranscriptResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) (dto.TranscriptResponse, error)
+	FindAllByRegistrationID(ctx context.Context, registrationID string) ([]dto.TranscriptResponse, error)
 	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.TranscriptAdvisorResponse, error)
+	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.TranscriptByStudentResponse, error)
 }
 
 func NewTranscriptService(
@@ -304,6 +306,77 @@ func (s *transcriptService) FindByRegistrationID(ctx context.Context, registrati
 		RegistrationID:       transcript.RegistrationID,
 		Title:                transcript.Title,
 		FileStorageID:        transcript.FileStorageID,
+	}
+
+	return transcriptResponses, nil
+}
+
+func (s *transcriptService) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.TranscriptByStudentResponse, error) {
+	user := s.userManagementService.GetUserData("GET", token)
+
+	userNRP, ok := user["nrp"].(string)
+	if !ok {
+		return dto.TranscriptByStudentResponse{}, errors.New("user NRP not found")
+	}
+
+	transcripts, err := s.transcriptRepo.FindByUserNRPAndGroupByRegistrationID(ctx, userNRP, nil)
+	if err != nil {
+		log.Println("ERROR FINDING TRANSCRIPTS BY USER NRP AND GROUP BY REGISTRATION ID: ", err)
+		return dto.TranscriptByStudentResponse{}, err
+	}
+
+	transcriptResponses := make(map[string][]dto.TranscriptResponse)
+
+	for registrationID, transcriptList := range transcripts {
+		registration := s.registrationService.GetRegistrationByID("GET", registrationID, token)
+		registrationActivityName, ok := registration["activity_name"].(string)
+		if !ok {
+			return dto.TranscriptByStudentResponse{}, errors.New("registration activity name not found")
+		}
+
+		var transcriptResponseList []dto.TranscriptResponse
+		for _, transcript := range transcriptList {
+			response := dto.TranscriptResponse{
+				ID:                   transcript.ID.String(),
+				UserID:               transcript.UserID,
+				UserNRP:              transcript.UserNRP,
+				AcademicAdvisorID:    transcript.AcademicAdvisorID,
+				AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+				RegistrationID:       transcript.RegistrationID,
+				Title:                transcript.Title,
+				FileStorageID:        transcript.FileStorageID,
+			}
+
+			transcriptResponseList = append(transcriptResponseList, response)
+		}
+
+		transcriptResponses[registrationActivityName] = transcriptResponseList
+	}
+
+	return dto.TranscriptByStudentResponse{
+		Transcripts: transcriptResponses,
+	}, nil
+}
+
+// FindAllByRegistrationID retrieves all transcripts by registration ID
+func (s *transcriptService) FindAllByRegistrationID(ctx context.Context, registrationID string) ([]dto.TranscriptResponse, error) {
+	transcripts, err := s.transcriptRepo.FindAllByRegistrationID(ctx, registrationID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var transcriptResponses []dto.TranscriptResponse
+	for _, transcript := range transcripts {
+		transcriptResponses = append(transcriptResponses, dto.TranscriptResponse{
+			ID:                   transcript.ID.String(),
+			UserID:               transcript.UserID,
+			UserNRP:              transcript.UserNRP,
+			AcademicAdvisorID:    transcript.AcademicAdvisorID,
+			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
+			RegistrationID:       transcript.RegistrationID,
+			Title:                transcript.Title,
+			FileStorageID:        transcript.FileStorageID,
+		})
 	}
 
 	return transcriptResponses, nil

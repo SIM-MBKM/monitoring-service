@@ -50,6 +50,18 @@ func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx con
 
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
 	for _, schedule := range reportSchedules {
+		// get report based on report_schedule_id order by created_at DESC limit 1
+		var report entity.Report
+		err = tx.Debug().
+			Model(&entity.Report{}).
+			Where("report_schedule_id = ?", schedule.ID).
+			Order("created_at DESC").
+			Limit(1).
+			Find(&report).Error
+		if err != nil {
+			return nil, err
+		}
+		schedule.Report = []entity.Report{report}
 		userReportSchedules[schedule.RegistrationID] = append(userReportSchedules[schedule.RegistrationID], schedule)
 	}
 

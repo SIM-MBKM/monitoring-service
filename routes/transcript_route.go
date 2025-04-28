@@ -12,18 +12,21 @@ func TranscriptRoutes(router *gin.Engine, transcriptController controller.Transc
 	authMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN", "DOSEN PEMBIMBING", "MAHASISWA"})
 	adminMiddleware := middleware.AuthorizationRole(userManagementService, []string{"ADMIN"})
 	advisorMiddleware := middleware.AuthorizationRole(userManagementService, []string{"DOSEN PEMBIMBING"})
+	studentMiddleware := middleware.AuthorizationRole(userManagementService, []string{"MAHASISWA"})
 
 	transcriptRoutes := router.Group("/monitoring-service/api/v1/transcripts")
 	{
-		transcriptRoutes.GET("/", adminMiddleware, transcriptController.Index)
+		transcriptRoutes.GET("", adminMiddleware, transcriptController.Index)
 		transcriptRoutes.GET("/advisor", advisorMiddleware, transcriptController.FindByAdvisorEmail)
-		transcriptRoutes.GET("/registrations/:id/transcripts", transcriptController.FindByRegistrationID)
+		transcriptRoutes.GET("/student", studentMiddleware, transcriptController.FindByUserNRPAndGroupByRegistrationID)
+		transcriptRoutes.GET("/registrations/:id", authMiddleware, transcriptController.FindAllByRegistrationID)
+		transcriptRoutes.GET("/registrations/:id/transcripts", authMiddleware, transcriptController.FindByRegistrationID)
 		transcriptRoutes.GET("/:id", authMiddleware, transcriptController.Show)
 
-		authorized := transcriptRoutes.Group("/")
+		authorized := transcriptRoutes.Group("")
 		authorized.Use(authMiddleware)
 		{
-			authorized.POST("/", transcriptController.Create)
+			authorized.POST("", transcriptController.Create)
 			authorized.PUT("/:id", transcriptController.Update)
 			authorized.DELETE("/:id", transcriptController.Destroy)
 		}

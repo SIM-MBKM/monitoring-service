@@ -20,7 +20,9 @@ type TranscriptRepository interface {
 	FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.Transcript, error)
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) (entity.Transcript, error)
+	FindAllByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.Transcript, error)
 	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string]entity.Transcript, error)
+	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.Transcript, error)
 }
 
 func NewTranscriptRepository(db *gorm.DB) TranscriptRepository {
@@ -194,4 +196,51 @@ func (r *transcriptRepository) FindByRegistrationID(ctx context.Context, registr
 	}
 
 	return transcripts, nil
+}
+
+func (r *transcriptRepository) FindAllByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.Transcript, error) {
+	var transcripts []entity.Transcript
+
+	if tx == nil {
+		tx = r.db.WithContext(ctx)
+	}
+
+	err := tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("registration_id = ?", registrationID).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&transcripts).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return transcripts, nil
+}
+
+func (r *transcriptRepository) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.Transcript, error) {
+	var transcripts []entity.Transcript
+
+	if tx == nil {
+		tx = r.db.WithContext(ctx)
+	}
+
+	err := tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("user_nrp = ?", userNRP).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&transcripts).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Group transcripts by registration_id
+	transcriptMap := make(map[string][]entity.Transcript)
+	for _, transcript := range transcripts {
+		transcriptMap[transcript.RegistrationID] = append(transcriptMap[transcript.RegistrationID], transcript)
+	}
+
+	return transcriptMap, nil
 }

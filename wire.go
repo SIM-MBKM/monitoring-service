@@ -19,17 +19,20 @@ type Application struct {
 	ReportController         controller.ReportController
 	ReportScheduleController controller.ReportScheduleController
 	TranscriptController     controller.TranscriptController
+	SyllabusController       controller.SyllabusController
 }
 
 func newApplication(
 	reportController controller.ReportController,
 	reportScheduleController controller.ReportScheduleController,
 	transcriptController controller.TranscriptController,
+	syllabusController controller.SyllabusController,
 ) *Application {
 	return &Application{
 		ReportController:         reportController,
 		ReportScheduleController: reportScheduleController,
 		TranscriptController:     transcriptController,
+		SyllabusController:       syllabusController,
 	}
 }
 
@@ -48,6 +51,10 @@ func ProvideReportScheduleRepository(db *gorm.DB) repository.ReportScheduleRepos
 
 func ProvideTranscriptRepository(db *gorm.DB) repository.TranscriptRepository {
 	return repository.NewTranscriptRepository(db)
+}
+
+func ProvideSyllabusRepository(db *gorm.DB) repository.SyllabusRepository {
+	return repository.NewSyllabusRepository(db)
 }
 
 // Service providers
@@ -107,6 +114,24 @@ func ProvideTranscriptService(
 	)
 }
 
+func ProvideSyllabusService(
+	syllabusRepo repository.SyllabusRepository,
+	userManagementBaseURI string,
+	registrationBaseURI config.RegistrationManagementbaseURI,
+	asyncURIs []string,
+	config *storageService.Config,
+	tokenManager *storageService.CacheTokenManager,
+) service.SyllabusService {
+	return service.NewSyllabusService(
+		syllabusRepo,
+		userManagementBaseURI,
+		string(registrationBaseURI),
+		asyncURIs,
+		config,
+		tokenManager,
+	)
+}
+
 // Controller providers
 func ProvideReportController(reportService service.ReportService) controller.ReportController {
 	return *controller.NewReportController(reportService)
@@ -120,6 +145,10 @@ func ProvideTranscriptController(transcriptService service.TranscriptService) co
 	return *controller.NewTranscriptController(transcriptService)
 }
 
+func ProvideSyllabusController(syllabusService service.SyllabusService) controller.SyllabusController {
+	return *controller.NewSyllabusController(syllabusService)
+}
+
 // Provider sets
 var (
 	RepositorySet = wire.NewSet(
@@ -127,6 +156,7 @@ var (
 		ProvideReportRepository,
 		ProvideReportScheduleRepository,
 		ProvideTranscriptRepository,
+		ProvideSyllabusRepository,
 	)
 
 	ServiceSet = wire.NewSet(
@@ -135,12 +165,14 @@ var (
 		ProvideReportService,
 		ProvideReportScheduleService,
 		ProvideTranscriptService,
+		ProvideSyllabusService,
 	)
 
 	ControllerSet = wire.NewSet(
 		ProvideReportController,
 		ProvideReportScheduleController,
 		ProvideTranscriptController,
+		ProvideSyllabusController,
 	)
 
 	AllSet = wire.NewSet(

@@ -8,11 +8,11 @@ import (
 
 type (
 	ReportSchedule struct {
-		ID                   uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey"`
-		UserID               string     `json:"user_id"`
-		UserNRP              string     `json:"user_nrp"`
-		RegistrationID       string     `json:"registration_id"`
-		ActivityName         string     `json:"activity_name"`
+		ID             uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+		UserID         string    `json:"user_id"`
+		UserNRP        string    `json:"user_nrp"`
+		RegistrationID string    `json:"registration_id"`
+		// ActivityName         string     `json:"activity_name"`
 		AcademicAdvisorID    string     `json:"academic_advisor_id"`
 		AcademicAdvisorEmail string     `json:"academic_advisor_email"`
 		ReportType           string     `json:"report_type"`

@@ -49,7 +49,9 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 	}
 
 	reportSchedules, err := s.reportScheduleRepo.FindByUserNRPAndGroupByRegistrationID(ctx, userNRP, nil)
+	log.Println("REPORT SCHEDULE: ", reportSchedules)
 	if err != nil {
+		log.Println("ERROR FINDING REPORT SCHEDULE BY USER NRP AND GROUP BY REGISTRATION ID: ", err)
 		return dto.ReportScheduleByStudentResponse{}, err
 	}
 

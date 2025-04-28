@@ -15,15 +15,15 @@ func ReportRoutes(router *gin.Engine, reportController controller.ReportControll
 
 	reportRoutes := router.Group("/monitoring-service/api/v1/reports")
 	{
-		reportRoutes.GET("/", adminMiddleware, reportController.Index)
+		reportRoutes.GET("", adminMiddleware, reportController.Index)
 		reportRoutes.GET("/report-schedules/:id/reports", reportController.FindByReportScheduleID)
 		reportRoutes.POST("/approval/:id", advisorMiddleware, reportController.Approval)
 
-		authorized := reportRoutes.Group("/")
+		authorized := reportRoutes.Group("")
 		authorized.Use(authMiddleware)
 		{
 			reportRoutes.GET("/:id", reportController.Show)
-			authorized.POST("/", reportController.Create)
+			authorized.POST("", reportController.Create)
 			authorized.PUT("/:id", reportController.Update)
 			authorized.DELETE("/:id", reportController.Destroy)
 		}
