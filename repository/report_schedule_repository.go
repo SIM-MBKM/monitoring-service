@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log"
+	"monitoring-service/dto"
 	"monitoring-service/entity"
 
 	"gorm.io/gorm"
@@ -21,7 +23,7 @@ type ReportScheduleReposiotry interface {
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
-	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
+	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest) (map[string][]entity.ReportSchedule, int64, error)
 }
 
 func NewReportScheduleRepository(db *gorm.DB) ReportScheduleReposiotry {
@@ -68,33 +70,85 @@ func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx con
 	return userReportSchedules, nil
 }
 
-func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
+func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest) (map[string][]entity.ReportSchedule, int64, error) {
 	if tx == nil {
 		tx = r.db
 	}
 
-	// Fetch all report schedules with their reports
-	var allReportSchedules []entity.ReportSchedule
+	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
+	var userNRPs []string
 	err := tx.Debug().
 		Model(&entity.ReportSchedule{}).
 		Where("academic_advisor_email = ?", advisorEmail).
 		Where("deleted_at IS NULL").
+		Distinct("user_nrp").
+		Order("user_nrp ASC"). // Ensure consistent ordering
+		Pluck("user_nrp", &userNRPs).Error
+
+	log.Println("USER NRP: ", userNRPs)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get total count of unique UserNRPs
+	totalCount := int64(len(userNRPs))
+
+	// Apply pagination to the UserNRPs list
+	var paginatedUserNRPs []string
+	if pagReq != nil {
+		startIdx := pagReq.Offset
+		endIdx := pagReq.Offset + pagReq.Limit
+
+		// Check bounds
+		if startIdx >= len(userNRPs) {
+			paginatedUserNRPs = []string{}
+		} else if endIdx > len(userNRPs) {
+			paginatedUserNRPs = userNRPs[startIdx:]
+		} else {
+			paginatedUserNRPs = userNRPs[startIdx:endIdx]
+		}
+	} else {
+		paginatedUserNRPs = userNRPs
+	}
+
+	// Return empty if no UserNRPs after pagination
+	if len(paginatedUserNRPs) == 0 {
+		return make(map[string][]entity.ReportSchedule), totalCount, nil
+	}
+
+	log.Println("PAGINATED USER NRP: ", paginatedUserNRPs)
+
+	// Now fetch the report schedules for only the paginated UserNRPs
+	var allReportSchedules []entity.ReportSchedule
+	err = tx.Debug().
+		Model(&entity.ReportSchedule{}).
+		Where("academic_advisor_email = ?", advisorEmail).
+		Where("user_nrp IN ?", paginatedUserNRPs).
+		Where("deleted_at IS NULL").
+		Order("user_nrp ASC"). // Ensure consistent ordering
 		Preload("Report", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC").Limit(1)
 		}).
 		Find(&allReportSchedules).Error
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	// Group them by user_id
+	// Group them by user_nrp - create a fresh map with proper keys
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
+
 	for _, schedule := range allReportSchedules {
-		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
+		// Make sure we're using the actual NRP from the schedule
+		nrp := schedule.UserNRP
+		// log.Printf("Schedule ID: %s has UserNRP: %s", schedule.ID, nrp)
+
+		// Append the schedule to the appropriate slice in the map
+		userReportSchedules[nrp] = append(userReportSchedules[nrp], schedule)
 	}
 
-	return userReportSchedules, nil
+	return userReportSchedules, totalCount, nil
 }
 
 func (r *reportScheduleRepository) FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error) {

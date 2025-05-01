@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 
 	baseService "github.com/SIM-MBKM/mod-service/src/service"
 )
@@ -45,6 +44,5 @@ func (s *RegistrationManagementService) GetRegistrationByID(method string, id st
 		"activity_name":          registration["activity_name"],
 	}
 
-	log.Println("REGISTRATION DATA: ", registrationData)
 	return registrationData
 }

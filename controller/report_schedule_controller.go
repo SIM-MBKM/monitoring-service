@@ -3,6 +3,7 @@ package controller
 import (
 	"log"
 	"monitoring-service/dto"
+	"monitoring-service/helper"
 	"monitoring-service/service"
 	"net/http"
 
@@ -29,7 +30,9 @@ func (c *ReportScheduleController) FindByAdvisorEmail(ctx *gin.Context) {
 		return
 	}
 
-	reportSchedules, err := c.reportScheduleService.FindByAdvisorEmail(ctx, token)
+	pagReq := helper.Pagination(ctx)
+
+	reportSchedules, metaData, err := c.reportScheduleService.FindByAdvisorEmail(ctx, token, pagReq)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -39,9 +42,10 @@ func (c *ReportScheduleController) FindByAdvisorEmail(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status:  dto.STATUS_SUCCESS,
-		Data:    reportSchedules,
-		Message: "Report schedule found successfully",
+		Status:             dto.STATUS_SUCCESS,
+		Data:               reportSchedules,
+		Message:            "Report schedule found successfully",
+		PaginationResponse: &metaData,
 	})
 }
 
