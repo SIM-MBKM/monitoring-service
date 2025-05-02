@@ -15,8 +15,9 @@ type (
 	}
 
 	ReportApprovalRequest struct {
-		Status   string `json:"status" validate:"required"`
-		Feedback string `json:"feedback"`
+		Status   string   `json:"status" validate:"required"`
+		Feedback string   `json:"feedback"`
+		IDs      []string `json:"ids"`
 	}
 
 	ReportResponse struct {

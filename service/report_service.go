@@ -28,7 +28,7 @@ type ReportService interface {
 	FindByID(ctx context.Context, id string, token string) (dto.ReportResponse, error)
 	Destroy(ctx context.Context, id string) error
 	FindByReportScheduleID(ctx context.Context, reportScheduleID string) ([]dto.ReportResponse, error)
-	Approval(ctx context.Context, id string, token string, report dto.ReportApprovalRequest) error
+	Approval(ctx context.Context, token string, report dto.ReportApprovalRequest) error
 }
 
 func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo repository.ReportScheduleReposiotry, userManagementBaseURI string, asyncURIs []string, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
@@ -40,16 +40,10 @@ func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo
 	}
 }
 
-func (s *reportService) Approval(ctx context.Context, id string, token string, report dto.ReportApprovalRequest) error {
-
-	reportEntity, err := s.reportRepo.FindByID(ctx, id, nil)
-	if err != nil {
-		return err
-	}
-
-	reportSchedule, err := s.reportScheduleRepo.FindByID(ctx, reportEntity.ReportScheduleID, nil)
-	if err != nil {
-		return err
+func (s *reportService) Approval(ctx context.Context, token string, report dto.ReportApprovalRequest) error {
+	// Check if IDs are provided in the request
+	if len(report.IDs) == 0 {
+		return errors.New("at least one report ID is required")
 	}
 
 	advisor := s.userManagementService.GetUserData("GET", token)
@@ -58,15 +52,28 @@ func (s *reportService) Approval(ctx context.Context, id string, token string, r
 		return errors.New("advisor email not found")
 	}
 
-	if advisorEmail != reportSchedule.AcademicAdvisorEmail {
-		return errors.New("unauthorized")
-	}
-	reportEntity.AcademicAdvisorStatus = report.Status
-	reportEntity.Feedback = report.Feedback
+	for _, reportID := range report.IDs {
+		reportEntity, err := s.reportRepo.FindByID(ctx, reportID, nil)
+		if err != nil {
+			return err
+		}
 
-	err = s.reportRepo.Approval(ctx, id, reportEntity, nil)
-	if err != nil {
-		return err
+		reportSchedule, err := s.reportScheduleRepo.FindByID(ctx, reportEntity.ReportScheduleID, nil)
+		if err != nil {
+			return err
+		}
+
+		if advisorEmail != reportSchedule.AcademicAdvisorEmail {
+			return errors.New("unauthorized")
+		}
+
+		reportEntity.AcademicAdvisorStatus = report.Status
+		reportEntity.Feedback = report.Feedback
+
+		err = s.reportRepo.Approval(ctx, reportID, reportEntity, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

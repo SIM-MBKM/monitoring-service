@@ -18,6 +18,7 @@ func ReportRoutes(router *gin.Engine, reportController controller.ReportControll
 		reportRoutes.GET("", adminMiddleware, reportController.Index)
 		reportRoutes.GET("/report-schedules/:id/reports", reportController.FindByReportScheduleID)
 		reportRoutes.POST("/approval/:id", advisorMiddleware, reportController.Approval)
+		reportRoutes.POST("/approval", advisorMiddleware, reportController.Approval)
 
 		authorized := reportRoutes.Group("")
 		authorized.Use(authMiddleware)

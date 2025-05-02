@@ -20,19 +20,39 @@ func NewReportController(reportService service.ReportService) *ReportController 
 
 func (c *ReportController) Approval(ctx *gin.Context) {
 	id := ctx.Param("id")
-	if id == "" {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "ID is required",
-		})
-		return
-	}
 
 	var reportApprovalRequest dto.ReportApprovalRequest
 	if err := ctx.ShouldBindJSON(&reportApprovalRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
+		})
+		return
+	}
+
+	// If ID is provided in the URL and IDs array is empty, use the ID from the URL
+	if id != "" && len(reportApprovalRequest.IDs) == 0 {
+		reportApprovalRequest.IDs = []string{id}
+	} else if id != "" {
+		// If both ID in URL and IDs array are provided, ensure the ID from URL is included
+		idFound := false
+		for _, existingID := range reportApprovalRequest.IDs {
+			if existingID == id {
+				idFound = true
+				break
+			}
+		}
+
+		if !idFound {
+			reportApprovalRequest.IDs = append(reportApprovalRequest.IDs, id)
+		}
+	}
+
+	// Make sure we have at least one ID
+	if len(reportApprovalRequest.IDs) == 0 {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "At least one report ID is required",
 		})
 		return
 	}
@@ -46,7 +66,7 @@ func (c *ReportController) Approval(ctx *gin.Context) {
 		return
 	}
 
-	err := c.reportService.Approval(ctx, id, token, reportApprovalRequest)
+	err := c.reportService.Approval(ctx, token, reportApprovalRequest)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -55,9 +75,14 @@ func (c *ReportController) Approval(ctx *gin.Context) {
 		return
 	}
 
+	successMessage := "Report approved successfully"
+	if len(reportApprovalRequest.IDs) > 1 {
+		successMessage = "Reports approved successfully"
+	}
+
 	ctx.JSON(http.StatusOK, dto.Response{
 		Status:  dto.STATUS_SUCCESS,
-		Message: "Report approved successfully",
+		Message: successMessage,
 	})
 }
 
