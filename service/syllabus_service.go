@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
+	"monitoring-service/helper"
 	"monitoring-service/repository"
 	"reflect"
 	"time"
@@ -30,7 +31,7 @@ type SyllabusService interface {
 	Destroy(ctx context.Context, id string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) (dto.SyllabusResponse, error)
 	FindAllByRegistrationID(ctx context.Context, registrationID string) ([]dto.SyllabusResponse, error)
-	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.SyllabusAdvisorResponse, error)
+	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string, pagReq dto.PaginationRequest, filter dto.SyllabusAdvisorFilterRequest) (dto.SyllabusAdvisorResponse, dto.PaginationResponse, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.SyllabusByStudentResponse, error)
 }
 
@@ -50,24 +51,36 @@ func NewSyllabusService(
 	}
 }
 
-func (s *syllabusService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.SyllabusAdvisorResponse, error) {
+func (s *syllabusService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string, pagReq dto.PaginationRequest, filter dto.SyllabusAdvisorFilterRequest) (dto.SyllabusAdvisorResponse, dto.PaginationResponse, error) {
 	user := s.userManagementService.GetUserData("GET", token)
 	advisorEmail, ok := user["email"].(string)
 	if !ok {
-		return dto.SyllabusAdvisorResponse{}, errors.New("advisor email not found")
+		return dto.SyllabusAdvisorResponse{}, dto.PaginationResponse{}, errors.New("advisor email not found")
 	}
 
-	syllabuses, err := s.syllabusRepo.FindByAdvisorEmailAndGroupByUserNRP(ctx, advisorEmail, nil)
+	syllabuses, totalCount, err := s.syllabusRepo.FindByAdvisorEmailAndGroupByUserNRP(ctx, advisorEmail, nil, &pagReq, filter.UserNRP)
 	if err != nil {
-		return dto.SyllabusAdvisorResponse{}, err
+		return dto.SyllabusAdvisorResponse{}, dto.PaginationResponse{}, err
 	}
 
 	syllabusResponses := make(map[string][]dto.SyllabusResponse)
 	for userNRP, syllabus := range syllabuses {
+		// Get registration details to add activity name
+		registration := s.registrationService.GetRegistrationByID("GET", syllabus.RegistrationID, token)
+
+		var activityName string
+		if registration != nil {
+			activityNameVal, ok := registration["activity_name"].(string)
+			if ok {
+				activityName = activityNameVal
+			}
+		}
+
 		syllabusResponses[userNRP] = append(syllabusResponses[userNRP], dto.SyllabusResponse{
 			ID:                   syllabus.ID.String(),
 			UserID:               syllabus.UserID,
 			UserNRP:              syllabus.UserNRP,
+			ActivityName:         activityName,
 			AcademicAdvisorID:    syllabus.AcademicAdvisorID,
 			AcademicAdvisorEmail: syllabus.AcademicAdvisorEmail,
 			RegistrationID:       syllabus.RegistrationID,
@@ -76,9 +89,12 @@ func (s *syllabusService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Contex
 		})
 	}
 
+	// Generate pagination metadata
+	paginationResponse := helper.MetaDataPagination(totalCount, pagReq)
+
 	return dto.SyllabusAdvisorResponse{
 		Syllabuses: syllabusResponses,
-	}, nil
+	}, paginationResponse, nil
 }
 
 // Index retrieves all syllabuses

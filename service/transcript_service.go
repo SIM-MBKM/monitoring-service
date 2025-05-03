@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
+	"monitoring-service/helper"
 	"monitoring-service/repository"
 	"reflect"
 	"time"
@@ -30,7 +31,7 @@ type TranscriptService interface {
 	Destroy(ctx context.Context, id string) error
 	FindByRegistrationID(ctx context.Context, registrationID string) (dto.TranscriptResponse, error)
 	FindAllByRegistrationID(ctx context.Context, registrationID string) ([]dto.TranscriptResponse, error)
-	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.TranscriptAdvisorResponse, error)
+	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string, pagReq dto.PaginationRequest, filter dto.TranscriptAdvisorFilterRequest) (dto.TranscriptAdvisorResponse, dto.PaginationResponse, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.TranscriptByStudentResponse, error)
 }
 
@@ -50,24 +51,36 @@ func NewTranscriptService(
 	}
 }
 
-func (s *transcriptService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string) (dto.TranscriptAdvisorResponse, error) {
+func (s *transcriptService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, token string, pagReq dto.PaginationRequest, filter dto.TranscriptAdvisorFilterRequest) (dto.TranscriptAdvisorResponse, dto.PaginationResponse, error) {
 	user := s.userManagementService.GetUserData("GET", token)
 	advisorEmail, ok := user["email"].(string)
 	if !ok {
-		return dto.TranscriptAdvisorResponse{}, errors.New("advisor email not found")
+		return dto.TranscriptAdvisorResponse{}, dto.PaginationResponse{}, errors.New("advisor email not found")
 	}
 
-	transcripts, err := s.transcriptRepo.FindByAdvisorEmailAndGroupByUserNRP(ctx, advisorEmail, nil)
+	transcripts, totalCount, err := s.transcriptRepo.FindByAdvisorEmailAndGroupByUserNRP(ctx, advisorEmail, nil, &pagReq, filter.UserNRP)
 	if err != nil {
-		return dto.TranscriptAdvisorResponse{}, err
+		return dto.TranscriptAdvisorResponse{}, dto.PaginationResponse{}, err
 	}
 
 	transcriptResponses := make(map[string][]dto.TranscriptResponse)
 	for userNRP, transcript := range transcripts {
+		// get registration by registration id
+		registration := s.registrationService.GetRegistrationByID("GET", transcript.RegistrationID, token)
+		if registration == nil {
+			return dto.TranscriptAdvisorResponse{}, dto.PaginationResponse{}, errors.New("registration not found")
+		}
+
+		registrationActivityName, ok := registration["activity_name"].(string)
+		if !ok {
+			return dto.TranscriptAdvisorResponse{}, dto.PaginationResponse{}, errors.New("registration activity name not found")
+		}
+
 		transcriptResponses[userNRP] = append(transcriptResponses[userNRP], dto.TranscriptResponse{
 			ID:                   transcript.ID.String(),
 			UserID:               transcript.UserID,
 			UserNRP:              transcript.UserNRP,
+			ActivityName:         registrationActivityName,
 			AcademicAdvisorID:    transcript.AcademicAdvisorID,
 			AcademicAdvisorEmail: transcript.AcademicAdvisorEmail,
 			RegistrationID:       transcript.RegistrationID,
@@ -76,9 +89,12 @@ func (s *transcriptService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Cont
 		})
 	}
 
+	// Generate pagination metadata
+	paginationResponse := helper.MetaDataPagination(totalCount, pagReq)
+
 	return dto.TranscriptAdvisorResponse{
 		Transcripts: transcriptResponses,
-	}, nil
+	}, paginationResponse, nil
 }
 
 // Index retrieves all transcripts

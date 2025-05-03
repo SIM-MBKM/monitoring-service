@@ -17,7 +17,7 @@ func TranscriptRoutes(router *gin.Engine, transcriptController controller.Transc
 	transcriptRoutes := router.Group("/monitoring-service/api/v1/transcripts")
 	{
 		transcriptRoutes.GET("", adminMiddleware, transcriptController.Index)
-		transcriptRoutes.GET("/advisor", advisorMiddleware, transcriptController.FindByAdvisorEmail)
+		transcriptRoutes.POST("/advisor", advisorMiddleware, transcriptController.FindByAdvisorEmail)
 		transcriptRoutes.GET("/student", studentMiddleware, transcriptController.FindByUserNRPAndGroupByRegistrationID)
 		transcriptRoutes.GET("/registrations/:id", authMiddleware, transcriptController.FindAllByRegistrationID)
 		transcriptRoutes.GET("/registrations/:id/transcripts", authMiddleware, transcriptController.FindByRegistrationID)

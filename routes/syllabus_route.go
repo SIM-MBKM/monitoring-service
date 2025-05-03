@@ -17,7 +17,7 @@ func SyllabusRoutes(router *gin.Engine, syllabusController controller.SyllabusCo
 	syllabusRoutes := router.Group("/monitoring-service/api/v1/syllabuses")
 	{
 		syllabusRoutes.GET("", adminMiddleware, syllabusController.Index)
-		syllabusRoutes.GET("/advisor", advisorMiddleware, syllabusController.FindByAdvisorEmail)
+		syllabusRoutes.POST("/advisor", advisorMiddleware, syllabusController.FindByAdvisorEmail)
 		syllabusRoutes.GET("/student", studentMiddleware, syllabusController.FindByUserNRPAndGroupByRegistrationID)
 		syllabusRoutes.GET("/registrations/:id", authMiddleware, syllabusController.FindAllByRegistrationID)
 		syllabusRoutes.GET("/registrations/:id/syllabuses", authMiddleware, syllabusController.FindByRegistrationID)

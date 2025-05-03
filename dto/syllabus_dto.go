@@ -6,10 +6,15 @@ type (
 		Title          string `form:"title" validate:"required"`
 	}
 
+	SyllabusAdvisorFilterRequest struct {
+		UserNRP string `json:"user_nrp"`
+	}
+
 	SyllabusResponse struct {
 		ID                   string `json:"id"`
 		UserID               string `json:"user_id"`
 		UserNRP              string `json:"user_nrp"`
+		ActivityName         string `json:"activity_name"`
 		AcademicAdvisorID    string `json:"academic_advisor_id"`
 		AcademicAdvisorEmail string `json:"academic_advisor_email"`
 		RegistrationID       string `json:"registration_id"`

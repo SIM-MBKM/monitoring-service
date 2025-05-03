@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"monitoring-service/dto"
 	"monitoring-service/entity"
 	"time"
 
@@ -21,7 +22,7 @@ type TranscriptRepository interface {
 	Destroy(ctx context.Context, id string, tx *gorm.DB) error
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) (entity.Transcript, error)
 	FindAllByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.Transcript, error)
-	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string]entity.Transcript, error)
+	FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNRPFilter string) (map[string]entity.Transcript, int64, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.Transcript, error)
 }
 
@@ -32,22 +33,70 @@ func NewTranscriptRepository(db *gorm.DB) TranscriptRepository {
 	}
 }
 
-func (r *transcriptRepository) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, advisorEmail string, tx *gorm.DB) (map[string]entity.Transcript, error) {
-	var transcripts []entity.Transcript
-
+func (r *transcriptRepository) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNRPFilter string) (map[string]entity.Transcript, int64, error) {
 	if tx == nil {
-		tx = r.db.WithContext(ctx)
+		tx = r.db
 	}
 
-	err := tx.Debug().
+	// Build the query for unique UserNRPs
+	query := tx.Debug().
 		Model(&entity.Transcript{}).
 		Where("academic_advisor_email = ?", advisorEmail).
+		Where("deleted_at IS NULL")
+
+	// Apply user_nrp filter if provided
+	if userNRPFilter != "" {
+		query = query.Where("user_nrp LIKE ?", "%"+userNRPFilter+"%")
+	}
+
+	// Get unique UserNRPs for this advisor (ordered by user_nrp)
+	var userNRPs []string
+	err := query.Distinct("user_nrp").
+		Order("user_nrp ASC"). // Ensure consistent ordering
+		Pluck("user_nrp", &userNRPs).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get total count of unique UserNRPs
+	totalCount := int64(len(userNRPs))
+
+	// Apply pagination to the UserNRPs list
+	var paginatedUserNRPs []string
+	if pagReq != nil {
+		startIdx := pagReq.Offset
+		endIdx := pagReq.Offset + pagReq.Limit
+
+		// Check bounds
+		if startIdx >= len(userNRPs) {
+			paginatedUserNRPs = []string{}
+		} else if endIdx > len(userNRPs) {
+			paginatedUserNRPs = userNRPs[startIdx:]
+		} else {
+			paginatedUserNRPs = userNRPs[startIdx:endIdx]
+		}
+	} else {
+		paginatedUserNRPs = userNRPs
+	}
+
+	// Return empty if no UserNRPs after pagination
+	if len(paginatedUserNRPs) == 0 {
+		return make(map[string]entity.Transcript), totalCount, nil
+	}
+
+	// Query for transcripts with the paginated user NRPs
+	var transcripts []entity.Transcript
+	err = tx.Debug().
+		Model(&entity.Transcript{}).
+		Where("academic_advisor_email = ?", advisorEmail).
+		Where("user_nrp IN ?", paginatedUserNRPs).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Find(&transcripts).Error
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// Convert slice to map with user_nrp as the key, keeping only the newest transcript for each NRP
@@ -59,7 +108,7 @@ func (r *transcriptRepository) FindByAdvisorEmailAndGroupByUserNRP(ctx context.C
 		}
 	}
 
-	return transcriptMap, nil
+	return transcriptMap, totalCount, nil
 }
 
 func (r *transcriptRepository) Index(ctx context.Context, tx *gorm.DB) ([]entity.Transcript, error) {

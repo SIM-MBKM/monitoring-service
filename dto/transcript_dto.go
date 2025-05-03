@@ -6,9 +6,14 @@ type (
 		Title          string `form:"title" validate:"required"`
 	}
 
+	TranscriptAdvisorFilterRequest struct {
+		UserNRP string `json:"user_nrp"`
+	}
+
 	TranscriptResponse struct {
 		ID                   string `json:"id"`
 		UserID               string `json:"user_id"`
+		ActivityName         string `json:"activity_name"`
 		UserNRP              string `json:"user_nrp"`
 		AcademicAdvisorID    string `json:"academic_advisor_id"`
 		AcademicAdvisorEmail string `json:"academic_advisor_email"`

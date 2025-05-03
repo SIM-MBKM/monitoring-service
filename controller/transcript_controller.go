@@ -2,6 +2,7 @@ package controller
 
 import (
 	"monitoring-service/dto"
+	"monitoring-service/helper"
 	"monitoring-service/service"
 	"net/http"
 
@@ -28,7 +29,17 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 		return
 	}
 
-	transcripts, err := c.transcriptService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token)
+	// Parse pagination parameters
+	pagReq := helper.Pagination(ctx)
+
+	// Parse filter from request body
+	var filter dto.TranscriptAdvisorFilterRequest
+	if err := ctx.ShouldBindJSON(&filter); err != nil {
+		// If parsing fails, proceed with empty filter (not a critical error)
+		filter = dto.TranscriptAdvisorFilterRequest{}
+	}
+
+	transcripts, metaData, err := c.transcriptService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token, pagReq, filter)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -38,9 +49,10 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.Response{
-		Status:  dto.STATUS_SUCCESS,
-		Data:    transcripts,
-		Message: "Transcripts fetched successfully",
+		Status:             dto.STATUS_SUCCESS,
+		Data:               transcripts,
+		Message:            "Transcripts fetched successfully",
+		PaginationResponse: &metaData,
 	})
 }
 
