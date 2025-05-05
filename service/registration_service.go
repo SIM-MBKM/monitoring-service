@@ -42,6 +42,7 @@ func (s *RegistrationManagementService) GetRegistrationByID(method string, id st
 		"academic_advisor":       registration["academic_advisor"],
 		"academic_advisor_email": registration["academic_advisor_email"],
 		"activity_name":          registration["activity_name"],
+		"approval_status":        registration["approval_status"],
 	}
 
 	return registrationData

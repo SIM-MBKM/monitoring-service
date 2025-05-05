@@ -381,6 +381,7 @@ func (s *syllabusService) FindByUserNRPAndGroupByRegistrationID(ctx context.Cont
 		}
 
 		if !approvalStatus {
+			log.Println("REGISTRATION APPROVAL STATUS IS FALSE: ", registrationID)
 			continue
 		}
 
