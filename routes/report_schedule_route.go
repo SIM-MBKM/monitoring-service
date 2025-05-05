@@ -18,7 +18,7 @@ func ReportScheduleRoutes(router *gin.Engine, reportScheduleController controlle
 	{
 		reportScheduleRoutes.GET("", adminMiddleware, reportScheduleController.Index)
 		reportScheduleRoutes.GET("/student", studentMiddleware, reportScheduleController.FindByStudentID)
-		reportScheduleRoutes.GET("/advisor", advisorMiddleware, reportScheduleController.FindByAdvisorEmail)
+		reportScheduleRoutes.POST("/advisor", advisorMiddleware, reportScheduleController.FindByAdvisorEmail)
 		reportScheduleRoutes.GET("/:id", authMiddleware, reportScheduleController.Show)
 		reportScheduleRoutes.GET("/registrations/:id/report-schedules", reportScheduleController.FindByRegistrationID)
 

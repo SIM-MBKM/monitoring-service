@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
-	"log"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +23,7 @@ type ReportScheduleReposiotry interface {
 	FindByRegistrationID(ctx context.Context, registrationID string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByUserID(ctx context.Context, userNRP string, tx *gorm.DB) ([]entity.ReportSchedule, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error)
-	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest) (map[string][]entity.ReportSchedule, int64, error)
+	FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error)
 }
 
 func NewReportScheduleRepository(db *gorm.DB) ReportScheduleReposiotry {
@@ -63,16 +63,24 @@ func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx con
 		if err != nil {
 			return nil, err
 		}
-		schedule.Report = []entity.Report{report}
+
+		if report.ID != uuid.Nil {
+			schedule.Report = []entity.Report{report}
+		}
+
 		userReportSchedules[schedule.RegistrationID] = append(userReportSchedules[schedule.RegistrationID], schedule)
 	}
 
 	return userReportSchedules, nil
 }
 
-func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest) (map[string][]entity.ReportSchedule, int64, error) {
+func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error) {
 	if tx == nil {
 		tx = r.db
+	}
+
+	if userNrp != "" {
+		tx = tx.Where("user_nrp = ?", userNrp)
 	}
 
 	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
@@ -84,8 +92,6 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		Distinct("user_nrp").
 		Order("user_nrp ASC"). // Ensure consistent ordering
 		Pluck("user_nrp", &userNRPs).Error
-
-	log.Println("USER NRP: ", userNRPs)
 
 	if err != nil {
 		return nil, 0, err
@@ -117,8 +123,6 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return make(map[string][]entity.ReportSchedule), totalCount, nil
 	}
 
-	log.Println("PAGINATED USER NRP: ", paginatedUserNRPs)
-
 	// Now fetch the report schedules for only the paginated UserNRPs
 	var allReportSchedules []entity.ReportSchedule
 	err = tx.Debug().
@@ -143,7 +147,21 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		// Make sure we're using the actual NRP from the schedule
 		nrp := schedule.UserNRP
 		// log.Printf("Schedule ID: %s has UserNRP: %s", schedule.ID, nrp)
+		// get report based on report_schedule_id order by created_at DESC limit 1
+		var report entity.Report
+		err = tx.Debug().
+			Model(&entity.Report{}).
+			Where("report_schedule_id = ?", schedule.ID).
+			Order("created_at DESC").
+			Limit(1).
+			Find(&report).Error
+		if err != nil {
+			return nil, 0, err
+		}
 
+		if report.ID != uuid.Nil {
+			schedule.Report = []entity.Report{report}
+		}
 		// Append the schedule to the appropriate slice in the map
 		userReportSchedules[nrp] = append(userReportSchedules[nrp], schedule)
 	}

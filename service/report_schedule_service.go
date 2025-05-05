@@ -29,7 +29,7 @@ type ReportScheduleService interface {
 	FindByRegistrationID(ctx context.Context, registrationID string) ([]dto.ReportScheduleResponse, error)
 	ReportScheduleAccess(ctx context.Context, reportSchedule dto.ReportScheduleRequest, token string) (bool, error)
 	FindByUserID(ctx context.Context, token string) ([]dto.ReportScheduleResponse, error)
-	FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error)
+	FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest, reportScheduleRequest dto.ReportScheduleAdvisorRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error)
 	FindByUserNRPAndGroupByRegistrationID(ctx context.Context, token string) (dto.ReportScheduleByStudentResponse, error)
 }
 
@@ -50,7 +50,6 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 	}
 
 	reportSchedules, err := s.reportScheduleRepo.FindByUserNRPAndGroupByRegistrationID(ctx, userNRP, nil)
-	log.Println("REPORT SCHEDULE: ", reportSchedules)
 	if err != nil {
 		log.Println("ERROR FINDING REPORT SCHEDULE BY USER NRP AND GROUP BY REGISTRATION ID: ", err)
 		return dto.ReportScheduleByStudentResponse{}, err
@@ -105,7 +104,7 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 	}, nil
 }
 
-func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error) {
+func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest, reportScheduleRequest dto.ReportScheduleAdvisorRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error) {
 	user := s.userManagementService.GetUserData("GET", token)
 	advisorEmail, ok := user["email"].(string)
 	if !ok {
@@ -113,7 +112,8 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 	}
 
 	// log.Println("Getting report schedules for advisor email:", advisorEmail)
-	reportSchedules, totalCount, err := s.reportScheduleRepo.FindByAdvisorEmailAndGroupByUserID(ctx, advisorEmail, nil, &pagReq)
+
+	reportSchedules, totalCount, err := s.reportScheduleRepo.FindByAdvisorEmailAndGroupByUserID(ctx, advisorEmail, nil, &pagReq, reportScheduleRequest.UserNRP)
 	if err != nil {
 		return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, err
 	}

@@ -35,4 +35,8 @@ type (
 	ReportScheduleByStudentResponse struct {
 		Reports map[string][]ReportScheduleResponse `json:"reports"`
 	}
+
+	ReportScheduleAdvisorRequest struct {
+		UserNRP string `json:"user_nrp"`
+	}
 )

@@ -32,7 +32,16 @@ func (c *ReportScheduleController) FindByAdvisorEmail(ctx *gin.Context) {
 
 	pagReq := helper.Pagination(ctx)
 
-	reportSchedules, metaData, err := c.reportScheduleService.FindByAdvisorEmail(ctx, token, pagReq)
+	var reportScheduleRequest dto.ReportScheduleAdvisorRequest
+	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	reportSchedules, metaData, err := c.reportScheduleService.FindByAdvisorEmail(ctx, token, pagReq, reportScheduleRequest)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,
