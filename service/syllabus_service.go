@@ -375,6 +375,15 @@ func (s *syllabusService) FindByUserNRPAndGroupByRegistrationID(ctx context.Cont
 			return dto.SyllabusByStudentResponse{}, errors.New("registration activity name not found")
 		}
 
+		approvalStatus, ok := registration["approval_status"].(bool)
+		if !ok {
+			return dto.SyllabusByStudentResponse{}, errors.New("registration approval status not found")
+		}
+
+		if !approvalStatus {
+			continue
+		}
+
 		var syllabusResponseList []dto.SyllabusResponse
 		for _, syllabus := range syllabusList {
 			response := dto.SyllabusResponse{

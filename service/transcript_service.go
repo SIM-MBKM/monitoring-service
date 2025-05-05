@@ -350,6 +350,15 @@ func (s *transcriptService) FindByUserNRPAndGroupByRegistrationID(ctx context.Co
 			return dto.TranscriptByStudentResponse{}, errors.New("registration activity name not found")
 		}
 
+		// skil if registration['approval_status'] is false
+		approvalStatus, ok := registration["approval_status"].(bool)
+		if !ok {
+			return dto.TranscriptByStudentResponse{}, errors.New("registration approval status not found")
+		}
+
+		if !approvalStatus {
+			continue
+		}
 		var transcriptResponseList []dto.TranscriptResponse
 		for _, transcript := range transcriptList {
 			response := dto.TranscriptResponse{

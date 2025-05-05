@@ -63,6 +63,17 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 		if !ok {
 			return dto.ReportScheduleByStudentResponse{}, errors.New("registration activity name not found")
 		}
+
+		// skil if registration['approval_status'] is false
+		approvalStatus, ok := registration["approval_status"].(bool)
+		if !ok {
+			return dto.ReportScheduleByStudentResponse{}, errors.New("registration approval status not found")
+		}
+
+		if !approvalStatus {
+			continue
+		}
+
 		var reportScheduleResponse []dto.ReportScheduleResponse
 		for _, reportSchedule := range reportSchedules {
 
