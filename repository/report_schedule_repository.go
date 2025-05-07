@@ -80,7 +80,7 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 	}
 
 	if userNrp != "" {
-		tx = tx.Where("user_nrp = ?", userNrp)
+		tx = tx.Where("report_schedules.user_nrp = ?", userNrp)
 	}
 
 	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
@@ -152,6 +152,7 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		err = tx.Debug().
 			Model(&entity.Report{}).
 			Where("report_schedule_id = ?", schedule.ID).
+			Where("deleted_at IS NULL").
 			Order("created_at DESC").
 			Limit(1).
 			Find(&report).Error
