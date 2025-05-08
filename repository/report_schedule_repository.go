@@ -79,18 +79,19 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		tx = r.db
 	}
 
-	if userNrp != "" {
-		tx = tx.Where("report_schedules.user_nrp = ?", userNrp)
-	}
-
 	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
 	var userNRPs []string
-	err := tx.Debug().
+	query := tx.Debug().
 		Model(&entity.ReportSchedule{}).
 		Where("academic_advisor_email = ?", advisorEmail).
-		Where("deleted_at IS NULL").
-		Distinct("user_nrp").
-		Order("user_nrp ASC"). // Ensure consistent ordering
+		Where("deleted_at IS NULL")
+
+	if userNrp != "" {
+		query = query.Where("user_nrp = ?", userNrp)
+	}
+
+	err := query.Distinct("user_nrp").
+		Order("user_nrp ASC").
 		Pluck("user_nrp", &userNRPs).Error
 
 	if err != nil {
@@ -130,24 +131,18 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		Where("academic_advisor_email = ?", advisorEmail).
 		Where("user_nrp IN ?", paginatedUserNRPs).
 		Where("deleted_at IS NULL").
-		Order("user_nrp ASC"). // Ensure consistent ordering
-		Preload("Report", func(db *gorm.DB) *gorm.DB {
-			return db.Order("created_at DESC").Limit(1)
-		}).
+		Order("user_nrp ASC").
 		Find(&allReportSchedules).Error
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Group them by user_nrp - create a fresh map with proper keys
+	// Group them by user_nrp
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
 
 	for _, schedule := range allReportSchedules {
-		// Make sure we're using the actual NRP from the schedule
-		nrp := schedule.UserNRP
-		// log.Printf("Schedule ID: %s has UserNRP: %s", schedule.ID, nrp)
-		// get report based on report_schedule_id order by created_at DESC limit 1
+		// Get the latest report for this schedule
 		var report entity.Report
 		err = tx.Debug().
 			Model(&entity.Report{}).
@@ -155,16 +150,17 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 			Where("deleted_at IS NULL").
 			Order("created_at DESC").
 			Limit(1).
-			Find(&report).Error
-		if err != nil {
+			First(&report).Error
+
+		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, 0, err
 		}
 
 		if report.ID != uuid.Nil {
 			schedule.Report = []entity.Report{report}
 		}
-		// Append the schedule to the appropriate slice in the map
-		userReportSchedules[nrp] = append(userReportSchedules[nrp], schedule)
+
+		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
 	}
 
 	return userReportSchedules, totalCount, nil
