@@ -30,6 +30,18 @@ func (m *MockReportRepository) Update(ctx context.Context, id string, report ent
 	return args.Error(0)
 }
 
+func (m *MockReportRepository) FindByID(ctx context.Context, id string, tx *gorm.DB) (entity.Report, error) {
+	args := m.Called(ctx, id, tx)
+
+	return args.Get(0).(entity.Report), args.Error(1)
+}
+
+func (m *MockReportRepository) Destroy(ctx context.Context, id string, tx *gorm.DB) error {
+	args := m.Called(ctx, id, tx)
+
+	return args.Error(0)
+}
+
 func (m *MockReportRepository) FindByReportScheduleID(ctx context.Context, reportScheduleID string, tx *gorm.DB) ([]entity.Report, error) {
 	args := m.Called(ctx, reportScheduleID, tx)
 

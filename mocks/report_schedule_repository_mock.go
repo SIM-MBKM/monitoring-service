@@ -55,7 +55,7 @@ func (m *MockReportScheduleRepository) FindByUserID(ctx context.Context, userNRP
 	return args.Get(0).([]entity.ReportSchedule), args.Error(1)
 }
 
-func (m *MockReportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
+func (m *MockReportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx context.Context, userNRP string, tx *gorm.DB) (map[string][]entity.ReportSchedule, error) {
 	args := m.Called(ctx, userNRP, tx)
 
 	return args.Get(0).(map[string][]entity.ReportSchedule), args.Error(1)
@@ -64,5 +64,5 @@ func (m *MockReportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx
 func (m *MockReportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error) {
 	args := m.Called(ctx, advisorEmail, tx, pagReq, userNrp)
 
-	return args.Get(0).(map[string][]entity.ReportSchedule), args.Get(1).(int64), args.Error(1)
+	return args.Get(0).(map[string][]entity.ReportSchedule), args.Get(1).(int64), args.Error(2)
 }
