@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 
 	baseService "github.com/SIM-MBKM/mod-service/src/service"
 )
@@ -22,6 +23,14 @@ func NewRegistrationManagementService(baseURI string, asyncURIs []string) *Regis
 
 // create function to get user by id
 func (s *RegistrationManagementService) GetRegistrationByID(method string, id string, token string) map[string]interface{} {
+	// split token
+	tokenParts := strings.Split(token, " ")
+	if len(tokenParts) != 2 {
+		return nil
+	}
+
+	token = tokenParts[1]
+
 	endpoint := fmt.Sprintf(GET_REGISTRATION_BY_ID_ENDPOINT, id)
 	res, err := s.baseService.Request(method, endpoint, nil, token)
 	if err != nil {
