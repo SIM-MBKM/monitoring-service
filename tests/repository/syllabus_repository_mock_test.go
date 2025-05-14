@@ -5,7 +5,7 @@ import (
 	"errors"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
-	"monitoring-service/mocks"
+	repository_mock "monitoring-service/mocks/repository"
 	"testing"
 	"time"
 
@@ -31,7 +31,7 @@ func createMockSyllabus() entity.Syllabus {
 }
 
 func TestSyllabusRepository_Index(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabuses := []entity.Syllabus{createMockSyllabus(), createMockSyllabus()}
@@ -45,7 +45,7 @@ func TestSyllabusRepository_Index(t *testing.T) {
 }
 
 func TestSyllabusRepository_Index_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 
@@ -58,7 +58,7 @@ func TestSyllabusRepository_Index_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_Create(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabus := createMockSyllabus()
@@ -72,7 +72,7 @@ func TestSyllabusRepository_Create(t *testing.T) {
 }
 
 func TestSyllabusRepository_Create_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabus := createMockSyllabus()
@@ -86,7 +86,7 @@ func TestSyllabusRepository_Create_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_Update(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabus := createMockSyllabus()
@@ -100,7 +100,7 @@ func TestSyllabusRepository_Update(t *testing.T) {
 }
 
 func TestSyllabusRepository_Update_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabus := createMockSyllabus()
@@ -114,7 +114,7 @@ func TestSyllabusRepository_Update_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByID(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	mockSyllabus := createMockSyllabus()
@@ -129,7 +129,7 @@ func TestSyllabusRepository_FindByID(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -143,7 +143,7 @@ func TestSyllabusRepository_FindByID_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_Destroy(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -156,7 +156,7 @@ func TestSyllabusRepository_Destroy(t *testing.T) {
 }
 
 func TestSyllabusRepository_Destroy_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -169,7 +169,7 @@ func TestSyllabusRepository_Destroy_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -184,7 +184,7 @@ func TestSyllabusRepository_FindByRegistrationID(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -198,7 +198,7 @@ func TestSyllabusRepository_FindByRegistrationID_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindAllByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -213,7 +213,7 @@ func TestSyllabusRepository_FindAllByRegistrationID(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindAllByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -227,7 +227,7 @@ func TestSyllabusRepository_FindAllByRegistrationID_Error(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByAdvisorEmailAndGroupByUserNRP(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"
@@ -248,7 +248,7 @@ func TestSyllabusRepository_FindByAdvisorEmailAndGroupByUserNRP(t *testing.T) {
 }
 
 func TestSyllabusRepository_FindByAdvisorEmailAndGroupByUserNRP_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"
@@ -265,7 +265,7 @@ func TestSyllabusRepository_FindByAdvisorEmailAndGroupByUserNRP_Error(t *testing
 }
 
 func TestSyllabusRepository_FindByUserNRPAndGroupByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
@@ -282,7 +282,7 @@ func TestSyllabusRepository_FindByUserNRPAndGroupByRegistrationID(t *testing.T) 
 }
 
 func TestSyllabusRepository_FindByUserNRPAndGroupByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockSyllabusRepository)
+	mockRepo := new(repository_mock.MockSyllabusRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"

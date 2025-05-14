@@ -7,3 +7,10 @@ storage/*
 static/*
 main
 *.json
+*.exe
+*.out
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*

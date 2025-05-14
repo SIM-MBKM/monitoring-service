@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"monitoring-service/entity"
-	"monitoring-service/mocks"
+	repository_mock "monitoring-service/mocks/repository"
 	"testing"
 	"time"
 
@@ -34,7 +34,7 @@ func createMockReport() entity.Report {
 }
 
 func TestReportRepository_Index(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	reports := []entity.Report{createMockReport(), createMockReport()}
@@ -47,7 +47,7 @@ func TestReportRepository_Index(t *testing.T) {
 }
 
 func TestReportRepository_Index_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 
@@ -60,7 +60,7 @@ func TestReportRepository_Index_Error(t *testing.T) {
 }
 
 func TestReportRepository_Index_NotFound(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 
@@ -73,7 +73,7 @@ func TestReportRepository_Index_NotFound(t *testing.T) {
 }
 
 func TestReportRepository_Create(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -86,7 +86,7 @@ func TestReportRepository_Create(t *testing.T) {
 }
 
 func TestReportRepository_Create_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -99,7 +99,7 @@ func TestReportRepository_Create_Error(t *testing.T) {
 }
 
 func TestReportRepository_Update(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -112,7 +112,7 @@ func TestReportRepository_Update(t *testing.T) {
 }
 
 func TestReportRepository_Update_ErrorDB(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -125,7 +125,7 @@ func TestReportRepository_Update_ErrorDB(t *testing.T) {
 }
 
 func TestReportRepository_FindByID(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -139,7 +139,7 @@ func TestReportRepository_FindByID(t *testing.T) {
 }
 
 func TestReportRepository_FindByID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	id := createMockReport().ID.String()
@@ -152,7 +152,7 @@ func TestReportRepository_FindByID_Error(t *testing.T) {
 }
 
 func TestReportRepository_Destroy(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	id := createMockReport().ID.String()
@@ -164,7 +164,7 @@ func TestReportRepository_Destroy(t *testing.T) {
 }
 
 func TestReportRepository_Destroy_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	id := createMockReport().ID.String()
@@ -176,7 +176,7 @@ func TestReportRepository_Destroy_Error(t *testing.T) {
 }
 
 func TestReportRepository_FindByReportScheduleID(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	reportScheduleID := createMockReport().ReportScheduleID
@@ -191,7 +191,7 @@ func TestReportRepository_FindByReportScheduleID(t *testing.T) {
 }
 
 func TestReportRepository_FindByReportScheduleID_NotFound(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	reportScheduleID := createMockReport().ReportScheduleID
@@ -204,7 +204,7 @@ func TestReportRepository_FindByReportScheduleID_NotFound(t *testing.T) {
 }
 
 func TestReportRepository_FindByReportScheduleID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	reportScheduleID := createMockReport().ReportScheduleID
@@ -217,7 +217,7 @@ func TestReportRepository_FindByReportScheduleID_Error(t *testing.T) {
 }
 
 func TestReportRepository_Approval(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -230,7 +230,7 @@ func TestReportRepository_Approval(t *testing.T) {
 }
 
 func TestReportRepository_Approval_NotFound(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()
@@ -243,7 +243,7 @@ func TestReportRepository_Approval_NotFound(t *testing.T) {
 }
 
 func TestReportRepository_Approval_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportRepository)
+	mockRepo := new(repository_mock.MockReportRepository)
 
 	ctx := context.Background()
 	mockReport := createMockReport()

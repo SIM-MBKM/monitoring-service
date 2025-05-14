@@ -5,7 +5,7 @@ import (
 	"errors"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
-	"monitoring-service/mocks"
+	repository_mock "monitoring-service/mocks/repository"
 	"testing"
 	"time"
 
@@ -32,23 +32,23 @@ func createMockReportSchedule() entity.ReportSchedule {
 }
 
 func TestReportScheduleRepository_Index(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedules := map[string][]entity.ReportSchedule{
+	repository_mockchedules := map[string][]entity.ReportSchedule{
 		"5123123123": {createMockReportSchedule(), createMockReportSchedule()},
 	}
 
-	mockRepo.On("Index", ctx, mock.Anything).Return(mockSchedules, nil)
+	mockRepo.On("Index", ctx, mock.Anything).Return(repository_mockchedules, nil)
 
 	result, err := mockRepo.Index(ctx, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedules, result)
+	assert.Equal(t, repository_mockchedules, result)
 }
 
 func TestReportScheduleRepository_Index_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 
@@ -61,78 +61,78 @@ func TestReportScheduleRepository_Index_Error(t *testing.T) {
 }
 
 func TestReportScheduleRepository_Create(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedule := createMockReportSchedule()
+	repository_mockchedule := createMockReportSchedule()
 
-	mockRepo.On("Create", ctx, mock.AnythingOfType("entity.ReportSchedule"), mock.Anything).Return(mockSchedule, nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("entity.ReportSchedule"), mock.Anything).Return(repository_mockchedule, nil)
 
-	result, err := mockRepo.Create(ctx, mockSchedule, nil)
+	result, err := mockRepo.Create(ctx, repository_mockchedule, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedule.ID, result.ID)
+	assert.Equal(t, repository_mockchedule.ID, result.ID)
 }
 
 func TestReportScheduleRepository_Create_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedule := createMockReportSchedule()
+	repository_mockchedule := createMockReportSchedule()
 
 	mockRepo.On("Create", ctx, mock.AnythingOfType("entity.ReportSchedule"), mock.Anything).Return(entity.ReportSchedule{}, errors.New("error"))
 
-	result, err := mockRepo.Create(ctx, mockSchedule, nil)
+	result, err := mockRepo.Create(ctx, repository_mockchedule, nil)
 
 	assert.Error(t, err)
 	assert.Equal(t, entity.ReportSchedule{}, result)
 }
 
 func TestReportScheduleRepository_Update(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedule := createMockReportSchedule()
-	id := mockSchedule.ID.String()
+	repository_mockchedule := createMockReportSchedule()
+	id := repository_mockchedule.ID.String()
 
 	mockRepo.On("Update", ctx, id, mock.AnythingOfType("entity.ReportSchedule"), mock.Anything).Return(nil)
 
-	err := mockRepo.Update(ctx, id, mockSchedule, nil)
+	err := mockRepo.Update(ctx, id, repository_mockchedule, nil)
 
 	assert.NoError(t, err)
 }
 
 func TestReportScheduleRepository_Update_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedule := createMockReportSchedule()
-	id := mockSchedule.ID.String()
+	repository_mockchedule := createMockReportSchedule()
+	id := repository_mockchedule.ID.String()
 
 	mockRepo.On("Update", ctx, id, mock.AnythingOfType("entity.ReportSchedule"), mock.Anything).Return(errors.New("error"))
 
-	err := mockRepo.Update(ctx, id, mockSchedule, nil)
+	err := mockRepo.Update(ctx, id, repository_mockchedule, nil)
 
 	assert.Error(t, err)
 }
 
 func TestReportScheduleRepository_FindByID(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
-	mockSchedule := createMockReportSchedule()
-	id := mockSchedule.ID.String()
+	repository_mockchedule := createMockReportSchedule()
+	id := repository_mockchedule.ID.String()
 
-	mockRepo.On("FindByID", ctx, id, mock.Anything).Return(mockSchedule, nil)
+	mockRepo.On("FindByID", ctx, id, mock.Anything).Return(repository_mockchedule, nil)
 
 	result, err := mockRepo.FindByID(ctx, id, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedule.ID, result.ID)
+	assert.Equal(t, repository_mockchedule.ID, result.ID)
 }
 
 func TestReportScheduleRepository_FindByID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -146,7 +146,7 @@ func TestReportScheduleRepository_FindByID_Error(t *testing.T) {
 }
 
 func TestReportScheduleRepository_Destroy(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -159,7 +159,7 @@ func TestReportScheduleRepository_Destroy(t *testing.T) {
 }
 
 func TestReportScheduleRepository_Destroy_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -172,22 +172,22 @@ func TestReportScheduleRepository_Destroy_Error(t *testing.T) {
 }
 
 func TestReportScheduleRepository_FindByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
-	mockSchedules := []entity.ReportSchedule{createMockReportSchedule(), createMockReportSchedule()}
+	repository_mockchedules := []entity.ReportSchedule{createMockReportSchedule(), createMockReportSchedule()}
 
-	mockRepo.On("FindByRegistrationID", ctx, registrationID, mock.Anything).Return(mockSchedules, nil)
+	mockRepo.On("FindByRegistrationID", ctx, registrationID, mock.Anything).Return(repository_mockchedules, nil)
 
 	result, err := mockRepo.FindByRegistrationID(ctx, registrationID, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedules, result)
+	assert.Equal(t, repository_mockchedules, result)
 }
 
 func TestReportScheduleRepository_FindByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -201,22 +201,22 @@ func TestReportScheduleRepository_FindByRegistrationID_Error(t *testing.T) {
 }
 
 func TestReportScheduleRepository_FindByUserID(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
-	mockSchedules := []entity.ReportSchedule{createMockReportSchedule(), createMockReportSchedule()}
+	repository_mockchedules := []entity.ReportSchedule{createMockReportSchedule(), createMockReportSchedule()}
 
-	mockRepo.On("FindByUserID", ctx, userNRP, mock.Anything).Return(mockSchedules, nil)
+	mockRepo.On("FindByUserID", ctx, userNRP, mock.Anything).Return(repository_mockchedules, nil)
 
 	result, err := mockRepo.FindByUserID(ctx, userNRP, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedules, result)
+	assert.Equal(t, repository_mockchedules, result)
 }
 
 func TestReportScheduleRepository_FindByUserID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
@@ -230,24 +230,24 @@ func TestReportScheduleRepository_FindByUserID_Error(t *testing.T) {
 }
 
 func TestReportScheduleRepository_FindByUserNRPAndGroupByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
-	mockSchedules := map[string][]entity.ReportSchedule{
+	repository_mockchedules := map[string][]entity.ReportSchedule{
 		"reg-id-1": {createMockReportSchedule(), createMockReportSchedule()},
 	}
 
-	mockRepo.On("FindByUserNRPAndGroupByRegistrationID", ctx, userNRP, mock.Anything).Return(mockSchedules, nil)
+	mockRepo.On("FindByUserNRPAndGroupByRegistrationID", ctx, userNRP, mock.Anything).Return(repository_mockchedules, nil)
 
 	result, err := mockRepo.FindByUserNRPAndGroupByRegistrationID(ctx, userNRP, nil)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedules, result)
+	assert.Equal(t, repository_mockchedules, result)
 }
 
 func TestReportScheduleRepository_FindByUserNRPAndGroupByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
@@ -261,28 +261,28 @@ func TestReportScheduleRepository_FindByUserNRPAndGroupByRegistrationID_Error(t 
 }
 
 func TestReportScheduleRepository_FindByAdvisorEmailAndGroupByUserID(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"
 	pagReq := &dto.PaginationRequest{Limit: 10, Offset: 0}
 	userNRP := ""
-	mockSchedules := map[string][]entity.ReportSchedule{
+	repository_mockchedules := map[string][]entity.ReportSchedule{
 		"5123123123": {createMockReportSchedule(), createMockReportSchedule()},
 	}
 	totalCount := int64(1)
 
-	mockRepo.On("FindByAdvisorEmailAndGroupByUserID", ctx, advisorEmail, mock.Anything, pagReq, userNRP).Return(mockSchedules, totalCount, nil)
+	mockRepo.On("FindByAdvisorEmailAndGroupByUserID", ctx, advisorEmail, mock.Anything, pagReq, userNRP).Return(repository_mockchedules, totalCount, nil)
 
 	result, count, err := mockRepo.FindByAdvisorEmailAndGroupByUserID(ctx, advisorEmail, nil, pagReq, userNRP)
 
 	assert.NoError(t, err)
-	assert.Equal(t, mockSchedules, result)
+	assert.Equal(t, repository_mockchedules, result)
 	assert.Equal(t, totalCount, count)
 }
 
 func TestReportScheduleRepository_FindByAdvisorEmailAndGroupByUserID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockReportScheduleRepository)
+	mockRepo := new(repository_mock.MockReportScheduleRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"

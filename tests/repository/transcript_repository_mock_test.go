@@ -5,7 +5,7 @@ import (
 	"errors"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
-	"monitoring-service/mocks"
+	repository_mock "monitoring-service/mocks/repository"
 	"testing"
 	"time"
 
@@ -31,7 +31,7 @@ func createMockTranscript() entity.Transcript {
 }
 
 func TestTranscriptRepository_Index(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscripts := []entity.Transcript{createMockTranscript(), createMockTranscript()}
@@ -45,7 +45,7 @@ func TestTranscriptRepository_Index(t *testing.T) {
 }
 
 func TestTranscriptRepository_Index_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 
@@ -58,7 +58,7 @@ func TestTranscriptRepository_Index_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_Create(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscript := createMockTranscript()
@@ -72,7 +72,7 @@ func TestTranscriptRepository_Create(t *testing.T) {
 }
 
 func TestTranscriptRepository_Create_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscript := createMockTranscript()
@@ -86,7 +86,7 @@ func TestTranscriptRepository_Create_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_Update(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscript := createMockTranscript()
@@ -100,7 +100,7 @@ func TestTranscriptRepository_Update(t *testing.T) {
 }
 
 func TestTranscriptRepository_Update_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscript := createMockTranscript()
@@ -114,7 +114,7 @@ func TestTranscriptRepository_Update_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindByID(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	mockTranscript := createMockTranscript()
@@ -129,7 +129,7 @@ func TestTranscriptRepository_FindByID(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindByID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -143,7 +143,7 @@ func TestTranscriptRepository_FindByID_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_Destroy(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -156,7 +156,7 @@ func TestTranscriptRepository_Destroy(t *testing.T) {
 }
 
 func TestTranscriptRepository_Destroy_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	id := uuid.New().String()
@@ -169,7 +169,7 @@ func TestTranscriptRepository_Destroy_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -184,7 +184,7 @@ func TestTranscriptRepository_FindByRegistrationID(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -198,7 +198,7 @@ func TestTranscriptRepository_FindByRegistrationID_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindAllByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -213,7 +213,7 @@ func TestTranscriptRepository_FindAllByRegistrationID(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindAllByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	registrationID := uuid.New().String()
@@ -227,7 +227,7 @@ func TestTranscriptRepository_FindAllByRegistrationID_Error(t *testing.T) {
 }
 
 func TestTranscriptRepository_FindByAdvisorEmailAndGroupByUserNRP(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"
@@ -248,7 +248,7 @@ func TestTranscriptRepository_FindByAdvisorEmailAndGroupByUserNRP(t *testing.T) 
 }
 
 func TestTranscriptRepository_FindByAdvisorEmailAndGroupByUserNRP_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	advisorEmail := "advisor@example.com"
@@ -265,7 +265,7 @@ func TestTranscriptRepository_FindByAdvisorEmailAndGroupByUserNRP_Error(t *testi
 }
 
 func TestTranscriptRepository_FindByUserNRPAndGroupByRegistrationID(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
@@ -282,7 +282,7 @@ func TestTranscriptRepository_FindByUserNRPAndGroupByRegistrationID(t *testing.T
 }
 
 func TestTranscriptRepository_FindByUserNRPAndGroupByRegistrationID_Error(t *testing.T) {
-	mockRepo := new(mocks.MockTranscriptRepository)
+	mockRepo := new(repository_mock.MockTranscriptRepository)
 
 	ctx := context.Background()
 	userNRP := "5123123123"
