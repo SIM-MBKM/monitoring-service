@@ -6,10 +6,12 @@ import (
 	"monitoring-service/middleware"
 	"monitoring-service/routes"
 	"monitoring-service/service"
+	"strconv"
 
 	storageService "github.com/SIM-MBKM/filestorage/storage"
 	"github.com/SIM-MBKM/mod-service/src/helpers"
 	baseServiceHelpers "github.com/SIM-MBKM/mod-service/src/helpers"
+	securityMiddleware "github.com/SIM-MBKM/mod-service/src/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,9 +19,13 @@ func main() {
 	// Load configuration
 	baseServiceHelpers.LoadEnv()
 
+	// security
+	securityKeyService := helpers.GetEnv("APP_KEY", "secret")
+	security := helpers.NewSecurity("sha256", securityKeyService, "aes")
+	expireSeconds, _ := strconv.ParseInt(helpers.GetEnv("APP_KEY_EXPIRE_SECONDS", "9999"), 10, 64)
+
 	// Initialize database connection
 	db := config.SetupDatabaseConnection()
-
 	// Initialize file storage
 	storageConfig, err := storageService.LoadConfig()
 	if err != nil {
@@ -58,6 +64,7 @@ func main() {
 
 	// add cors
 	router.Use(middleware.CORS())
+	router.Use(securityMiddleware.AccessKeyMiddleware(security, securityKeyService, expireSeconds))
 
 	// Setup routes for all controllers
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
