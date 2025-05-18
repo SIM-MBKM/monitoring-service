@@ -21,7 +21,6 @@ func main() {
 
 	// security
 	securityKeyService := helpers.GetEnv("APP_KEY", "secret")
-	security := helpers.NewSecurity("sha256", securityKeyService, "aes")
 	expireSeconds, _ := strconv.ParseInt(helpers.GetEnv("APP_KEY_EXPIRE_SECONDS", "9999"), 10, 64)
 
 	// Initialize database connection
@@ -64,7 +63,7 @@ func main() {
 
 	// add cors
 	router.Use(middleware.CORS())
-	router.Use(securityMiddleware.AccessKeyMiddleware(security, securityKeyService, expireSeconds))
+	router.Use(securityMiddleware.AccessKeyMiddleware(securityKeyService, expireSeconds))
 
 	// Setup routes for all controllers
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
