@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	storageService "github.com/SIM-MBKM/filestorage/storage"
-	"github.com/SIM-MBKM/mod-service/src/helpers"
 	baseServiceHelpers "github.com/SIM-MBKM/mod-service/src/helpers"
 	securityMiddleware "github.com/SIM-MBKM/mod-service/src/middleware"
 	"github.com/gin-gonic/gin"
@@ -20,8 +19,8 @@ func main() {
 	baseServiceHelpers.LoadEnv()
 
 	// security
-	securityKeyService := helpers.GetEnv("APP_KEY", "secret")
-	expireSeconds, _ := strconv.ParseInt(helpers.GetEnv("APP_KEY_EXPIRE_SECONDS", "9999"), 10, 64)
+	securityKeyService := baseServiceHelpers.GetEnv("APP_KEY", "secret")
+	expireSeconds, _ := strconv.ParseInt(baseServiceHelpers.GetEnv("APP_KEY_EXPIRE_SECONDS", "9999"), 10, 64)
 
 	// Initialize database connection
 	db := config.SetupDatabaseConnection()
@@ -35,9 +34,9 @@ func main() {
 	tokenManager := storageService.NewCacheTokenManager(storageConfig, cache)
 
 	// Get environment variables
-	userManagementBaseURI := helpers.GetEnv("USER_MANAGEMENT_BASE_URI", "http://localhost:8080")
-	registrationBaseURI := helpers.GetEnv("REGISTRATION_MANAGEMENT_BASE_URI", "http://localhost:8081")
-	port := helpers.GetEnv("GOLANG_PORT", "8088")
+	userManagementBaseURI := baseServiceHelpers.GetEnv("USER_MANAGEMENT_BASE_URI", "http://localhost:8080")
+	registrationBaseURI := baseServiceHelpers.GetEnv("REGISTRATION_MANAGEMENT_BASE_URI", "http://localhost:8081")
+	port := baseServiceHelpers.GetEnv("GOLANG_PORT", "8088")
 
 	// Initialize user management service for routes
 	userManagementService := service.NewUserManagementService(
