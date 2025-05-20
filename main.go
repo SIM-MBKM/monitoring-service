@@ -36,6 +36,7 @@ func main() {
 	// Get environment variables
 	userManagementBaseURI := baseServiceHelpers.GetEnv("USER_MANAGEMENT_BASE_URI", "http://localhost:8080")
 	registrationBaseURI := baseServiceHelpers.GetEnv("REGISTRATION_MANAGEMENT_BASE_URI", "http://localhost:8081")
+	brokerBaseURI := baseServiceHelpers.GetEnv("BROKER_BASE_URI", "http://localhost:8082")
 	port := baseServiceHelpers.GetEnv("GOLANG_PORT", "8088")
 
 	// Initialize user management service for routes
@@ -50,6 +51,7 @@ func main() {
 		storageConfig,
 		tokenManager,
 		userManagementBaseURI,
+		config.BrokerbaseURI(brokerBaseURI),
 		config.RegistrationManagementbaseURI(registrationBaseURI),
 		[]string{"/async"},
 	)

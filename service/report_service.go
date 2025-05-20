@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"monitoring-service/dto"
 	"monitoring-service/entity"
@@ -19,6 +20,7 @@ type reportService struct {
 	reportScheduleRepo    repository.ReportScheduleReposiotry
 	fileService           *FileService
 	userManagementService *UserManagementService
+	brokerService         *BrokerService
 }
 
 type ReportService interface {
@@ -31,12 +33,13 @@ type ReportService interface {
 	Approval(ctx context.Context, token string, report dto.ReportApprovalRequest) error
 }
 
-func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo repository.ReportScheduleReposiotry, userManagementBaseURI string, asyncURIs []string, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
+func NewReportService(reportRepo repository.ReportRepository, reportScheduleRepo repository.ReportScheduleReposiotry, userManagementBaseURI string, brokerBaseURI string, asyncURIs []string, config *storageService.Config, tokenManager *storageService.CacheTokenManager) ReportService {
 	return &reportService{
 		reportRepo:            reportRepo,
 		reportScheduleRepo:    reportScheduleRepo,
 		fileService:           NewFileService(config, tokenManager),
 		userManagementService: NewUserManagementService(userManagementBaseURI, asyncURIs),
+		brokerService:         NewBrokerService(brokerBaseURI, asyncURIs),
 	}
 }
 
@@ -48,6 +51,7 @@ func (s *reportService) Approval(ctx context.Context, token string, report dto.R
 
 	advisor := s.userManagementService.GetUserData("GET", token)
 	advisorEmail, ok := advisor["email"].(string)
+	advisorName := advisor["name"]
 	if !ok {
 		return errors.New("advisor email not found")
 	}
@@ -74,6 +78,23 @@ func (s *reportService) Approval(ctx context.Context, token string, report dto.R
 		if err != nil {
 			return err
 		}
+
+		message := fmt.Sprintf("report week %d %s has been %s by %s", reportSchedule.Week, reportSchedule.ReportType, report.Status, advisorName)
+
+		// get mahasiswa data
+		mahasiswaData := s.userManagementService.GetUserByFilter(map[string]interface{}{
+			"user_nrp": reportSchedule.UserNRP,
+		}, "POST", token)
+
+		mahasiswaEmail := mahasiswaData[0]["email"]
+
+		err = s.brokerService.SendNotification(map[string]interface{}{
+			"sender_name":    advisorName,
+			"sender_email":   advisorEmail,
+			"receiver_email": mahasiswaEmail,
+			"type":           "APPROVAL REPORT",
+			"message":        message,
+		}, "POST", token)
 	}
 
 	return nil

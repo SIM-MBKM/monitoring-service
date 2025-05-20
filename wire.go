@@ -73,6 +73,7 @@ func ProvideReportService(
 	reportRepo repository.ReportRepository,
 	reportScheduleRepo repository.ReportScheduleReposiotry,
 	userManagementBaseURI string,
+	brokerBaseURI config.BrokerbaseURI,
 	asyncURIs []string,
 	config *storageService.Config,
 	tokenManager *storageService.CacheTokenManager,
@@ -81,6 +82,7 @@ func ProvideReportService(
 		reportRepo,
 		reportScheduleRepo,
 		userManagementBaseURI,
+		string(brokerBaseURI),
 		asyncURIs,
 		config,
 		tokenManager,
@@ -188,6 +190,7 @@ func InitializeAPI(
 	config *storageService.Config,
 	tokenManager *storageService.CacheTokenManager,
 	userManagementBaseURI string,
+	brokerBaseURI config.BrokerbaseURI,
 	registrationBaseURI config.RegistrationManagementbaseURI,
 	asyncURIs []string,
 ) (*Application, error) {

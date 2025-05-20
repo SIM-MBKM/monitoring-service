@@ -19,10 +19,10 @@ import (
 // Injectors from wire.go:
 
 // InitializeAPI creates the full application with all dependencies
-func InitializeAPI(db *gorm.DB, config2 *storage.Config, tokenManager *storage.CacheTokenManager, userManagementBaseURI string, registrationBaseURI config.RegistrationManagementbaseURI, asyncURIs []string) (*Application, error) {
+func InitializeAPI(db *gorm.DB, config2 *storage.Config, tokenManager *storage.CacheTokenManager, userManagementBaseURI string, brokerBaseURI config.BrokerbaseURI, registrationBaseURI config.RegistrationManagementbaseURI, asyncURIs []string) (*Application, error) {
 	reportRepository := ProvideReportRepository(db)
 	reportScheduleReposiotry := ProvideReportScheduleRepository(db)
-	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, asyncURIs, config2, tokenManager)
+	reportService := ProvideReportService(reportRepository, reportScheduleReposiotry, userManagementBaseURI, brokerBaseURI, asyncURIs, config2, tokenManager)
 	reportController := ProvideReportController(reportService)
 	reportScheduleService := ProvideReportScheduleService(reportScheduleReposiotry, userManagementBaseURI, registrationBaseURI, asyncURIs)
 	reportScheduleController := ProvideReportScheduleController(reportScheduleService)
@@ -97,6 +97,7 @@ func ProvideReportService(
 	reportRepo repository.ReportRepository,
 	reportScheduleRepo repository.ReportScheduleReposiotry,
 	userManagementBaseURI string,
+	brokerBaseURI config.BrokerbaseURI,
 	asyncURIs []string, config2 *storage.Config,
 	tokenManager *storage.CacheTokenManager,
 ) service.ReportService {
@@ -104,6 +105,7 @@ func ProvideReportService(
 		reportRepo,
 		reportScheduleRepo,
 		userManagementBaseURI,
+		string(brokerBaseURI),
 		asyncURIs, config2, tokenManager,
 	)
 }
