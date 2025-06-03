@@ -79,22 +79,25 @@ func (s *reportService) Approval(ctx context.Context, token string, report dto.R
 			return err
 		}
 
-		message := fmt.Sprintf("report week %d %s has been %s by %s", reportSchedule.Week, reportSchedule.ReportType, report.Status, advisorName)
-
 		// get mahasiswa data
 		mahasiswaData := s.userManagementService.GetUserByFilter(map[string]interface{}{
 			"user_nrp": reportSchedule.UserNRP,
 		}, "POST", token)
 
-		mahasiswaEmail := mahasiswaData[0]["email"]
+		if mahasiswaData != nil || len(mahasiswaData) != 0 {
+			message := fmt.Sprintf("report week %d %s has been %s by %s", reportSchedule.Week, reportSchedule.ReportType, report.Status, advisorName)
+			mahasiswaEmail := mahasiswaData[0]["email"]
 
-		err = s.brokerService.SendNotification(map[string]interface{}{
-			"sender_name":    advisorName,
-			"sender_email":   advisorEmail,
-			"receiver_email": mahasiswaEmail,
-			"type":           "APPROVAL REPORT",
-			"message":        message,
-		}, "POST", token)
+			err = s.brokerService.SendNotification(map[string]interface{}{
+				"sender_name":    advisorName,
+				"sender_email":   advisorEmail,
+				"receiver_email": mahasiswaEmail,
+				"type":           "APPROVAL REPORT",
+				"message":        message,
+			}, "POST", token)
+
+		}
+
 	}
 
 	return nil

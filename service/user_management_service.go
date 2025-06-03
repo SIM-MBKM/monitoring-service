@@ -46,7 +46,7 @@ func (s *UserManagementService) GetUserByID(method string, token string, id stri
 
 	var userData map[string]interface{}
 	userData = map[string]interface{}{
-		"id":    users["id"],
+		"id":    users["auth_user_id"],
 		"nrp":   users["nrp"],
 		"name":  users["name"],
 		"role":  users["role"],
@@ -77,7 +77,7 @@ func (s *UserManagementService) GetUserData(method string, token string) map[str
 
 	var usersData map[string]interface{}
 	usersData = map[string]interface{}{
-		"id":    users["id"],
+		"id":    users["auth_user_id"],
 		"nrp":   users["nrp"],
 		"name":  users["name"],
 		"role":  users["role"],
@@ -116,7 +116,7 @@ func (s *UserManagementService) GetUserByFilter(data map[string]interface{}, met
 		}
 
 		usersData = append(usersData, map[string]interface{}{
-			"id":   user["id"],
+			"id":   user["auth_user_id"],
 			"nrp":  user["nrp"],
 			"name": user["name"],
 		})
@@ -173,7 +173,7 @@ func (s *UserManagementService) GetDosenDataByEmail(email string, method string,
 
 	var dosenData map[string]interface{}
 	dosenData = map[string]interface{}{
-		"id":           dosen["id"],
+		"id":           dosen["auth_user_id"],
 		"auth_user_id": dosen["auth_user_id"],
 		"nip":          dosen["nrp"],
 		"name":         dosen["name"],
