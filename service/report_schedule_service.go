@@ -526,17 +526,19 @@ func (s *reportScheduleService) FindByRegistrationID(ctx context.Context, regist
 
 	var reportScheduleResponses []dto.ReportScheduleResponse
 	for _, reportSchedule := range reportSchedules {
-		reportScheduleResponses = append(reportScheduleResponses, dto.ReportScheduleResponse{
-			ID:                   reportSchedule.ID.String(),
-			UserID:               reportSchedule.UserID,
-			RegistrationID:       reportSchedule.RegistrationID,
-			AcademicAdvisorID:    reportSchedule.AcademicAdvisorID,
-			AcademicAdvisorEmail: reportSchedule.AcademicAdvisorEmail,
-			ReportType:           reportSchedule.ReportType,
-			Week:                 reportSchedule.Week,
-			StartDate:            reportSchedule.StartDate.Format(time.RFC3339),
-			EndDate:              reportSchedule.EndDate.Format(time.RFC3339),
-			Report: &dto.ReportResponse{
+		var reportScheduleData dto.ReportScheduleResponse
+		reportScheduleData.ID = reportSchedule.ID.String()
+		reportScheduleData.UserID = reportSchedule.UserID
+		reportScheduleData.RegistrationID = reportSchedule.RegistrationID
+		reportScheduleData.AcademicAdvisorID = reportSchedule.AcademicAdvisorID
+		reportScheduleData.AcademicAdvisorEmail = reportSchedule.AcademicAdvisorEmail
+		reportScheduleData.ReportType = reportSchedule.ReportType
+		reportScheduleData.Week = reportSchedule.Week
+		reportScheduleData.StartDate = reportSchedule.StartDate.Format(time.RFC3339)
+		reportScheduleData.EndDate = reportSchedule.EndDate.Format(time.RFC3339)
+
+		if len(reportSchedule.Report) > 0 {
+			reportScheduleData.Report = &dto.ReportResponse{
 				ID:                    reportSchedule.Report[0].ID.String(),
 				ReportScheduleID:      reportSchedule.ID.String(),
 				FileStorageID:         reportSchedule.Report[0].FileStorageID,
@@ -545,8 +547,11 @@ func (s *reportScheduleService) FindByRegistrationID(ctx context.Context, regist
 				ReportType:            reportSchedule.Report[0].ReportType,
 				Feedback:              reportSchedule.Report[0].Feedback,
 				AcademicAdvisorStatus: reportSchedule.Report[0].AcademicAdvisorStatus,
-			},
-		})
+			}
+		} else {
+			reportScheduleData.Report = nil // Ensure Report is nil if no reports exist
+		}
+		reportScheduleResponses = append(reportScheduleResponses, reportScheduleData)
 	}
 
 	return reportScheduleResponses, nil
