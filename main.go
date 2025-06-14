@@ -17,6 +17,7 @@ import (
 func main() {
 	// Load configuration
 	baseServiceHelpers.LoadEnv()
+	cfg := config.LoadConfig()
 
 	// security
 	securityKeyService := baseServiceHelpers.GetEnv("APP_KEY", "secret")
@@ -62,9 +63,17 @@ func main() {
 	// Setup Gin router
 	router := gin.Default()
 
+	frontendConfig := securityMiddleware.FrontendConfig{
+		AllowedOrigins:    cfg.FrontendAllowedOrigins,
+		AllowedReferers:   cfg.FrontendAllowedReferers,
+		RequireOrigin:     cfg.FrontendRequireOrigin,
+		BypassForBrowsers: cfg.FrontendBypassBrowsers,
+		CustomHeader:      cfg.FrontendCustomHeader,
+		CustomHeaderValue: cfg.FrontendCustomHeaderValue,
+	}
 	// add cors
 	router.Use(middleware.CORS())
-	router.Use(securityMiddleware.AccessKeyMiddleware(securityKeyService, expireSeconds))
+	router.Use(securityMiddleware.AccessKeyMiddleware(securityKeyService, expireSeconds, &frontendConfig))
 
 	// Setup routes for all controllers
 	routes.ReportRoutes(router, app.ReportController, *userManagementService)
