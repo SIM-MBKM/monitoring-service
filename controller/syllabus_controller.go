@@ -60,7 +60,7 @@ func (c *SyllabusController) FindByAdvisorEmail(ctx *gin.Context) {
 
 	syllabuses, metaData, err := c.syllabusService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token, pagReq, filter)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -106,7 +106,7 @@ func (c *SyllabusController) Index(ctx *gin.Context) {
 
 	syllabuses, err := c.syllabusService.Index(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -213,7 +213,7 @@ func (c *SyllabusController) Create(ctx *gin.Context) {
 
 	syllabus, err := c.syllabusService.Create(ctx, syllabusRequest, file, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -299,7 +299,7 @@ func (c *SyllabusController) Update(ctx *gin.Context) {
 
 	err := c.syllabusService.Update(ctx, id, syllabusRequest)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -351,7 +351,7 @@ func (c *SyllabusController) Show(ctx *gin.Context) {
 
 	syllabus, err := c.syllabusService.FindByID(ctx, id, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -400,7 +400,7 @@ func (c *SyllabusController) Destroy(ctx *gin.Context) {
 
 	err := c.syllabusService.Destroy(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -449,7 +449,7 @@ func (c *SyllabusController) FindByRegistrationID(ctx *gin.Context) {
 
 	syllabuses, err := c.syllabusService.FindByRegistrationID(ctx, registrationID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -501,7 +501,7 @@ func (c *SyllabusController) FindAllByRegistrationID(ctx *gin.Context) {
 
 	syllabuses, err := c.syllabusService.FindAllByRegistrationID(ctx, registrationID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -527,7 +527,7 @@ func (c *SyllabusController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Cont
 
 	syllabuses, err := c.syllabusService.FindByUserNRPAndGroupByRegistrationID(ctx, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})

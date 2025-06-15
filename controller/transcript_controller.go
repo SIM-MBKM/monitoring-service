@@ -42,7 +42,7 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 
 	transcripts, metaData, err := c.transcriptService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token, pagReq, filter)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -88,7 +88,7 @@ func (c *TranscriptController) Index(ctx *gin.Context) {
 
 	transcripts, err := c.transcriptService.Index(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -202,7 +202,7 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 
 	transcript, err := c.transcriptService.Create(ctx, transcriptRequest, file, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -285,7 +285,7 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 
 	err := c.transcriptService.Update(ctx, id, transcriptRequest)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -336,7 +336,7 @@ func (c *TranscriptController) Show(ctx *gin.Context) {
 
 	transcript, err := c.transcriptService.FindByID(ctx, id, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -388,7 +388,7 @@ func (c *TranscriptController) Destroy(ctx *gin.Context) {
 
 	err := c.transcriptService.Destroy(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -414,7 +414,7 @@ func (c *TranscriptController) FindByRegistrationID(ctx *gin.Context) {
 
 	transcripts, err := c.transcriptService.FindByRegistrationID(ctx, registrationID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -440,7 +440,7 @@ func (c *TranscriptController) FindByUserNRPAndGroupByRegistrationID(ctx *gin.Co
 
 	transcripts, err := c.transcriptService.FindByUserNRPAndGroupByRegistrationID(ctx, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -467,7 +467,7 @@ func (c *TranscriptController) FindAllByRegistrationID(ctx *gin.Context) {
 
 	transcripts, err := c.transcriptService.FindAllByRegistrationID(ctx, registrationID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})

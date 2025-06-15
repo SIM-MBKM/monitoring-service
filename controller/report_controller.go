@@ -29,6 +29,14 @@ func validateReportData(reportRequest dto.ReportRequest, ctx *gin.Context) {
 		return
 	}
 
+	if reportRequest.Content == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Content is required",
+		})
+		return
+	}
+
 	if reportRequest.ReportType == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -118,7 +126,7 @@ func (c *ReportController) Approval(ctx *gin.Context) {
 
 	err := c.reportService.Approval(ctx, token, reportApprovalRequest)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -140,7 +148,7 @@ func (c *ReportController) Approval(ctx *gin.Context) {
 func (c *ReportController) Index(ctx *gin.Context) {
 	reports, err := c.reportService.Index(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -246,7 +254,7 @@ func (c *ReportController) Create(ctx *gin.Context) {
 
 	report, err := c.reportService.Create(ctx, reportRequest, file, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -304,7 +312,7 @@ func (c *ReportController) Update(ctx *gin.Context) {
 
 	err := c.reportService.Update(ctx, id, reportRequest)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -367,7 +375,7 @@ func (c *ReportController) Show(ctx *gin.Context) {
 
 	report, err := c.reportService.FindByID(ctx, id, token)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -394,7 +402,7 @@ func (c *ReportController) Destroy(ctx *gin.Context) {
 
 	err := c.reportService.Destroy(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
@@ -444,7 +452,7 @@ func (c *ReportController) FindByReportScheduleID(ctx *gin.Context) {
 
 	reports, err := c.reportService.FindByReportScheduleID(ctx, reportScheduleID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dto.Response{
+		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
 		})
