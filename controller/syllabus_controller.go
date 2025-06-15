@@ -142,6 +142,22 @@ func (c *SyllabusController) Create(ctx *gin.Context) {
 	syllabusRequest.Title = helper.SanitizeString(syllabusRequest.Title)
 	syllabusRequest.RegistrationID = helper.SanitizeString(syllabusRequest.RegistrationID)
 
+	if syllabusRequest.RegistrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+
+	if syllabusRequest.Title == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Title is required",
+		})
+		return
+	}
+
 	if !helper.ValidateUUID(syllabusRequest.RegistrationID) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -247,6 +263,32 @@ func (c *SyllabusController) Update(ctx *gin.Context) {
 	}
 
 	var syllabusRequest dto.SyllabusRequest
+
+	// sanitize the request body
+	syllabusRequest.Title = helper.SanitizeString(ctx.PostForm("title"))
+	syllabusRequest.RegistrationID = helper.SanitizeString(ctx.PostForm("registration_id"))
+	if syllabusRequest.RegistrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+	if syllabusRequest.Title == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Title is required",
+		})
+		return
+	}
+	if !helper.ValidateUUID(syllabusRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
+
 	if err := ctx.ShouldBindJSON(&syllabusRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,

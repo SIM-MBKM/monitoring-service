@@ -5,13 +5,13 @@ type (
 		ReportScheduleID string `form:"report_schedule_id" validate:"required"`
 		Title            string `form:"title" validate:"required"`
 		Content          string `form:"content" validate:"required"`
-		ReportType       string `form:"report_type" validate:"required"`
+		ReportType       string `form:"report_type" validate:"required,oneof=WEEKLY_REPORT FINAL_REPORT"`
 	}
 
 	ReportUpdateRequest struct {
 		Title      string `form:"title" validate:"required"`
 		Content    string `form:"content" validate:"required"`
-		ReportType string `form:"report_type" validate:"required"`
+		ReportType string `form:"report_type" validate:"required,oneof=WEEKLY_REPORT FINAL_REPORT"`
 	}
 
 	ReportApprovalRequest struct {

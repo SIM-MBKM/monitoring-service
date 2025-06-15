@@ -122,6 +122,30 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 	}
 
 	transcriptRequest.Title = helper.SanitizeString(transcriptRequest.Title)
+	transcriptRequest.RegistrationID = helper.SanitizeString(transcriptRequest.RegistrationID)
+
+	if transcriptRequest.Title == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Title is required",
+		})
+		return
+	}
+	if transcriptRequest.RegistrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+
+	if !helper.ValidateUUID(transcriptRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
 
 	file, err := ctx.FormFile("file")
 	if err := helper.ValidateFileUpload(file); err != nil {
@@ -231,6 +255,30 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
+		})
+		return
+	}
+
+	transcriptRequest.Title = helper.SanitizeString(transcriptRequest.Title)
+	transcriptRequest.RegistrationID = helper.SanitizeString(transcriptRequest.RegistrationID)
+	if transcriptRequest.Title == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Title is required",
+		})
+		return
+	}
+	if transcriptRequest.RegistrationID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Registration ID is required",
+		})
+		return
+	}
+	if !helper.ValidateUUID(transcriptRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
 		})
 		return
 	}

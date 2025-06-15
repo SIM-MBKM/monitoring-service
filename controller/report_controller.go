@@ -15,6 +15,53 @@ type ReportController struct {
 	reportService service.ReportService
 }
 
+func validateReportData(reportRequest dto.ReportRequest, ctx *gin.Context) {
+	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
+	reportRequest.Content = helper.SanitizeString(reportRequest.Content)
+	reportRequest.ReportScheduleID = helper.SanitizeString(reportRequest.ReportScheduleID)
+	reportRequest.ReportType = helper.SanitizeString(reportRequest.ReportType)
+
+	if reportRequest.Title == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Title is required",
+		})
+		return
+	}
+
+	if reportRequest.ReportType == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Report type is required",
+		})
+		return
+	}
+	if !helper.ValidateReportType(reportRequest.ReportType) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid report type",
+		})
+		return
+	}
+
+	if reportRequest.ReportScheduleID == "" {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Report schedule ID is required",
+		})
+		return
+	}
+	// Validate report schedule ID format
+
+	if !helper.ValidateUUID(reportRequest.ReportScheduleID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid report schedule ID format",
+		})
+		return
+	}
+}
+
 func NewReportController(reportService service.ReportService) *ReportController {
 	return &ReportController{
 		reportService: reportService,
@@ -110,6 +157,13 @@ func (c *ReportController) Index(ctx *gin.Context) {
 // Create handles POST /api/v1/reports
 func (c *ReportController) Create(ctx *gin.Context) {
 	var reportRequest dto.ReportRequest
+	if err := ctx.ShouldBind(&reportRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
 	if ctx.Request.ContentLength > helper.MaxFileSize+helper.MaxContentLength {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -118,31 +172,13 @@ func (c *ReportController) Create(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctx.ShouldBind(&reportRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: err.Error(),
-		})
-		return
-	}
+	// sanitize input
+	validateReportData(reportRequest, ctx)
 
 	if err := helper.ValidateReportRequest(reportRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
-		})
-		return
-	}
-
-	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
-	reportRequest.Content = helper.SanitizeString(reportRequest.Content)
-	reportRequest.ReportScheduleID = helper.SanitizeString(reportRequest.ReportScheduleID)
-	reportRequest.ReportType = helper.SanitizeString(reportRequest.ReportType)
-
-	if !helper.ValidateUUID(reportRequest.ReportScheduleID) {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "Invalid report schedule ID format",
 		})
 		return
 	}
@@ -252,6 +288,7 @@ func (c *ReportController) Update(ctx *gin.Context) {
 		return
 	}
 
+	validateReportData(reportRequest, ctx)
 	// sanitize input
 	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
 	reportRequest.Content = helper.SanitizeString(reportRequest.Content)

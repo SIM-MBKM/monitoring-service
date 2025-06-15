@@ -7,7 +7,7 @@ type (
 		RegistrationID       string `json:"registration_id" validate:"required"`
 		AcademicAdvisorID    string `json:"academic_advisor_id" validate:"required"`
 		AcademicAdvisorEmail string `json:"academic_advisor_email" validate:"required"`
-		ReportType           string `json:"report_type" validate:"required"`
+		ReportType           string `json:"report_type" validate:"required,oneof=WEEKLY_REPORT FINAL_REPORT"`
 		Week                 int    `json:"week" validate:"required"`
 		StartDate            string `json:"start_date" validate:"required"`
 		EndDate              string `json:"end_date" validate:"required"`
