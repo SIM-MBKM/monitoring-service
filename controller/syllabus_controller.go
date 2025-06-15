@@ -140,6 +140,15 @@ func (c *SyllabusController) Create(ctx *gin.Context) {
 	}
 
 	syllabusRequest.Title = helper.SanitizeString(syllabusRequest.Title)
+	syllabusRequest.RegistrationID = helper.SanitizeString(syllabusRequest.RegistrationID)
+
+	if !helper.ValidateUUID(syllabusRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
 
 	file, err := ctx.FormFile("file")
 
@@ -436,6 +445,14 @@ func (c *SyllabusController) FindAllByRegistrationID(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Token is required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
