@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"monitoring-service/dto"
 	"monitoring-service/helper"
 	"monitoring-service/service"
@@ -152,24 +151,24 @@ func (c *SyllabusController) Create(ctx *gin.Context) {
 		return
 	}
 
-	fileContent, err := file.Open()
-	if err != nil {
-		log.Printf("Error opening file: %v", err)
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "Unable to process file",
-		})
-		return
-	}
-	defer fileContent.Close()
+	// fileContent, err := file.Open()
+	// if err != nil {
+	// 	log.Printf("Error opening file: %v", err)
+	// 	ctx.JSON(http.StatusBadRequest, dto.Response{
+	// 		Status:  dto.STATUS_ERROR,
+	// 		Message: "Unable to process file",
+	// 	})
+	// 	return
+	// }
+	// defer fileContent.Close()
 
-	if err := helper.ValidateMimeType(fileContent); err != nil {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: err.Error(),
-		})
-		return
-	}
+	// if err := helper.ValidateMimeType(fileContent); err != nil {
+	// 	ctx.JSON(http.StatusBadRequest, dto.Response{
+	// 		Status:  dto.STATUS_ERROR,
+	// 		Message: err.Error(),
+	// 	})
+	// 	return
+	// }
 	if file == nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,

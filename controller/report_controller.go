@@ -136,6 +136,16 @@ func (c *ReportController) Create(ctx *gin.Context) {
 
 	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
 	reportRequest.Content = helper.SanitizeString(reportRequest.Content)
+	reportRequest.ReportScheduleID = helper.SanitizeString(reportRequest.ReportScheduleID)
+	reportRequest.ReportType = helper.SanitizeString(reportRequest.ReportType)
+
+	if !helper.ValidateUUID(reportRequest.ReportScheduleID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid report schedule ID format",
+		})
+		return
+	}
 
 	file, err := ctx.FormFile("file")
 	// if file is not required, set file to nil
@@ -158,24 +168,24 @@ func (c *ReportController) Create(ctx *gin.Context) {
 		}
 
 		// 🔒 SECURITY FIX 6: Validate MIME type by reading file content
-		fileContent, err := file.Open()
-		if err != nil {
-			log.Printf("Error opening file: %v", err)
-			ctx.JSON(http.StatusBadRequest, dto.Response{
-				Status:  dto.STATUS_ERROR,
-				Message: "Unable to process file",
-			})
-			return
-		}
-		defer fileContent.Close()
+		// fileContent, err := file.Open()
+		// if err != nil {
+		// 	log.Printf("Error opening file: %v", err)
+		// 	ctx.JSON(http.StatusBadRequest, dto.Response{
+		// 		Status:  dto.STATUS_ERROR,
+		// 		Message: "Unable to process file",
+		// 	})
+		// 	return
+		// }
+		// defer fileContent.Close()
 
-		if err := helper.ValidateMimeType(fileContent); err != nil {
-			ctx.JSON(http.StatusBadRequest, dto.Response{
-				Status:  dto.STATUS_ERROR,
-				Message: err.Error(),
-			})
-			return
-		}
+		// if err := helper.ValidateMimeType(fileContent); err != nil {
+		// 	ctx.JSON(http.StatusBadRequest, dto.Response{
+		// 		Status:  dto.STATUS_ERROR,
+		// 		Message: err.Error(),
+		// 	})
+		// 	return
+		// }
 	}
 
 	if file == nil {
@@ -225,11 +235,32 @@ func (c *ReportController) Update(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
 	var reportRequest dto.ReportRequest
 	if err := ctx.ShouldBindJSON(&reportRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
+		})
+		return
+	}
+
+	// sanitize input
+	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
+	reportRequest.Content = helper.SanitizeString(reportRequest.Content)
+	reportRequest.ReportScheduleID = helper.SanitizeString(reportRequest.ReportScheduleID)
+	reportRequest.ReportType = helper.SanitizeString(reportRequest.ReportType)
+	if !helper.ValidateUUID(reportRequest.ReportScheduleID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid report schedule ID format",
 		})
 		return
 	}
@@ -346,6 +377,30 @@ func (c *ReportController) FindByReportScheduleID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Report Schedule ID is required",
+		})
+		return
+	}
+
+	if !helper.ValidateUUID(reportScheduleID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Report Schedule ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}

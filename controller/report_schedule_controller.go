@@ -133,6 +133,39 @@ func (c *ReportScheduleController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid token format",
+		})
+		return
+	}
+
+	// Sanitize the request data
+	reportScheduleRequest.AcademicAdvisorEmail = helper.SanitizeString(reportScheduleRequest.AcademicAdvisorEmail)
+	reportScheduleRequest.RegistrationID = helper.SanitizeString(reportScheduleRequest.RegistrationID)
+	reportScheduleRequest.AcademicAdvisorID = helper.SanitizeString(reportScheduleRequest.AcademicAdvisorID)
+	reportScheduleRequest.UserNRP = helper.SanitizeString(reportScheduleRequest.UserNRP)
+	reportScheduleRequest.UserID = helper.SanitizeString(reportScheduleRequest.UserID)
+	reportScheduleRequest.StartDate = helper.SanitizeString(reportScheduleRequest.StartDate)
+	reportScheduleRequest.EndDate = helper.SanitizeString(reportScheduleRequest.EndDate)
+	reportScheduleRequest.ReportType = helper.SanitizeString(reportScheduleRequest.ReportType)
+
+	if !helper.ValidateUUID(reportScheduleRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
+	if !helper.ValidateUUID(reportScheduleRequest.AcademicAdvisorID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Academic Advisor ID format",
+		})
+		return
+	}
+
 	reportSchedule, err := c.reportScheduleService.Create(ctx, reportScheduleRequest, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
@@ -160,6 +193,14 @@ func (c *ReportScheduleController) Update(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
@@ -169,11 +210,44 @@ func (c *ReportScheduleController) Update(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid token format",
+		})
+		return
+	}
+
 	var reportScheduleRequest dto.ReportScheduleRequest
 	if err := ctx.ShouldBindJSON(&reportScheduleRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: err.Error(),
+		})
+		return
+	}
+
+	// Sanitize the request data
+	reportScheduleRequest.AcademicAdvisorEmail = helper.SanitizeString(reportScheduleRequest.AcademicAdvisorEmail)
+	reportScheduleRequest.RegistrationID = helper.SanitizeString(reportScheduleRequest.RegistrationID)
+	reportScheduleRequest.AcademicAdvisorID = helper.SanitizeString(reportScheduleRequest.AcademicAdvisorID)
+	reportScheduleRequest.UserNRP = helper.SanitizeString(reportScheduleRequest.UserNRP)
+	reportScheduleRequest.UserID = helper.SanitizeString(reportScheduleRequest.UserID)
+	reportScheduleRequest.StartDate = helper.SanitizeString(reportScheduleRequest.StartDate)
+	reportScheduleRequest.EndDate = helper.SanitizeString(reportScheduleRequest.EndDate)
+	reportScheduleRequest.ReportType = helper.SanitizeString(reportScheduleRequest.ReportType)
+
+	if !helper.ValidateUUID(reportScheduleRequest.RegistrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
+	if !helper.ValidateUUID(reportScheduleRequest.AcademicAdvisorID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Academic Advisor ID format",
 		})
 		return
 	}
