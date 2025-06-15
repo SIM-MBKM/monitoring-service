@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+	"log"
 	"monitoring-service/dto"
 	"monitoring-service/helper"
 	"monitoring-service/service"
@@ -58,6 +60,33 @@ func (c *TranscriptController) FindByAdvisorEmail(ctx *gin.Context) {
 
 // Index handles GET /api/v1/transcripts
 func (c *TranscriptController) Index(ctx *gin.Context) {
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Authorization required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
+
+	_, _, err := helper.ValidatePaginationParams(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
 	transcripts, err := c.transcriptService.Index(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
@@ -85,7 +114,44 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if ctx.Request.ContentLength > helper.MaxFileSize+helper.MaxContentLength { // +1KB for form data
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Request too large",
+		})
+		return
+	}
+
+	transcriptRequest.Title = helper.SanitizeString(transcriptRequest.Title)
+
 	file, err := ctx.FormFile("file")
+	if err := helper.ValidateFileUpload(file); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: fmt.Sprintf("File validation failed: %s", err.Error()),
+		})
+		return
+	}
+
+	fileContent, err := file.Open()
+	if err != nil {
+		log.Printf("Error opening file: %v", err)
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Unable to process file",
+		})
+		return
+	}
+	defer fileContent.Close()
+
+	if err := helper.ValidateMimeType(fileContent); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
 	if file == nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -95,10 +161,18 @@ func (c *TranscriptController) Create(ctx *gin.Context) {
 	}
 
 	token := ctx.GetHeader("Authorization")
+
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
@@ -126,6 +200,29 @@ func (c *TranscriptController) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "ID is required",
+		})
+		return
+	}
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
@@ -165,11 +262,27 @@ func (c *TranscriptController) Show(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Token is required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
@@ -197,6 +310,31 @@ func (c *TranscriptController) Destroy(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "ID is required",
+		})
+		return
+	}
+
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Authorization required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}

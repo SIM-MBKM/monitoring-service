@@ -240,6 +240,23 @@ func (c *ReportScheduleController) Destroy(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	sanitizedId := helper.SanitizeString(id)
+	if sanitizedId != id {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid characters in ID",
+		})
+		return
+	}
+
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
@@ -250,6 +267,24 @@ func (c *ReportScheduleController) Destroy(ctx *gin.Context) {
 	}
 
 	err := c.reportScheduleService.Destroy(ctx, id, token)
+	if err != nil {
+		if err.Error() == "record not found" {
+			ctx.JSON(http.StatusNotFound, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: "Report schedule not found",
+			})
+			return
+		}
+
+		if err.Error() == "user role not allowed" {
+			ctx.JSON(http.StatusForbidden, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: "Access denied",
+			})
+			return
+		}
+	}
+
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Status:  dto.STATUS_ERROR,

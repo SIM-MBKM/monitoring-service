@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+	"log"
 	"monitoring-service/dto"
 	"monitoring-service/helper"
 	"monitoring-service/service"
@@ -29,6 +31,22 @@ func (c *SyllabusController) FindByAdvisorEmail(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
+
+	_, _, err := helper.ValidatePaginationParams(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
 	// Parse pagination parameters
 	pagReq := helper.Pagination(ctx)
 
@@ -38,6 +56,8 @@ func (c *SyllabusController) FindByAdvisorEmail(ctx *gin.Context) {
 		// If parsing fails, proceed with empty filter (not a critical error)
 		filter = dto.SyllabusAdvisorFilterRequest{}
 	}
+
+	filter.UserNRP = helper.SanitizeString(filter.UserNRP)
 
 	syllabuses, metaData, err := c.syllabusService.FindByAdvisorEmailAndGroupByUserNRP(ctx, token, pagReq, filter)
 	if err != nil {
@@ -58,6 +78,33 @@ func (c *SyllabusController) FindByAdvisorEmail(ctx *gin.Context) {
 
 // Index handles GET /api/v1/syllabuses
 func (c *SyllabusController) Index(ctx *gin.Context) {
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Authorization required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
+
+	_, _, err := helper.ValidatePaginationParams(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
 	syllabuses, err := c.syllabusService.Index(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
@@ -85,7 +132,44 @@ func (c *SyllabusController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if ctx.Request.ContentLength > helper.MaxFileSize+helper.MaxContentLength { // +1KB for form data
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Request too large",
+		})
+		return
+	}
+
+	syllabusRequest.Title = helper.SanitizeString(syllabusRequest.Title)
+
 	file, err := ctx.FormFile("file")
+
+	if err := helper.ValidateFileUpload(file); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: fmt.Sprintf("File validation failed: %s", err.Error()),
+		})
+		return
+	}
+
+	fileContent, err := file.Open()
+	if err != nil {
+		log.Printf("Error opening file: %v", err)
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Unable to process file",
+		})
+		return
+	}
+	defer fileContent.Close()
+
+	if err := helper.ValidateMimeType(fileContent); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
 	if file == nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -130,6 +214,30 @@ func (c *SyllabusController) Update(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
+
 	var syllabusRequest dto.SyllabusRequest
 	if err := ctx.ShouldBindJSON(&syllabusRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
@@ -165,11 +273,28 @@ func (c *SyllabusController) Show(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
 	token := ctx.GetHeader("Authorization")
+
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Token is required",
+		})
+		return
+	}
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
@@ -200,6 +325,28 @@ func (c *SyllabusController) Destroy(ctx *gin.Context) {
 		})
 		return
 	}
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
 
 	err := c.syllabusService.Destroy(ctx, id)
 	if err != nil {
@@ -223,6 +370,29 @@ func (c *SyllabusController) FindByRegistrationID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Registration ID is required",
+		})
+		return
+	}
+	if !helper.ValidateUUID(registrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
+		})
+		return
+	}
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
 		})
 		return
 	}
@@ -250,6 +420,23 @@ func (c *SyllabusController) FindAllByRegistrationID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
 			Message: "Registration ID is required",
+		})
+		return
+	}
+
+	if !helper.ValidateUUID(registrationID) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid Registration ID format",
+		})
+		return
+	}
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Token is required",
 		})
 		return
 	}

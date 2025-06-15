@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"fmt"
+	"log"
 	"monitoring-service/dto"
+	"monitoring-service/helper"
 	"monitoring-service/service"
 	"net/http"
 
@@ -107,6 +110,14 @@ func (c *ReportController) Index(ctx *gin.Context) {
 // Create handles POST /api/v1/reports
 func (c *ReportController) Create(ctx *gin.Context) {
 	var reportRequest dto.ReportRequest
+	if ctx.Request.ContentLength > helper.MaxFileSize+helper.MaxContentLength {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Request too large",
+		})
+		return
+	}
+
 	if err := ctx.ShouldBind(&reportRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -115,8 +126,58 @@ func (c *ReportController) Create(ctx *gin.Context) {
 		return
 	}
 
+	if err := helper.ValidateReportRequest(reportRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	reportRequest.Title = helper.SanitizeString(reportRequest.Title)
+	reportRequest.Content = helper.SanitizeString(reportRequest.Content)
+
 	file, err := ctx.FormFile("file")
 	// if file is not required, set file to nil
+	if err != nil && err != http.ErrMissingFile {
+		log.Printf("File upload error: %v", err)
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "File upload error",
+		})
+		return
+	}
+
+	if file != nil {
+		if err := helper.ValidateFileUpload(file); err != nil {
+			ctx.JSON(http.StatusBadRequest, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: fmt.Sprintf("File validation failed: %s", err.Error()),
+			})
+			return
+		}
+
+		// 🔒 SECURITY FIX 6: Validate MIME type by reading file content
+		fileContent, err := file.Open()
+		if err != nil {
+			log.Printf("Error opening file: %v", err)
+			ctx.JSON(http.StatusBadRequest, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: "Unable to process file",
+			})
+			return
+		}
+		defer fileContent.Close()
+
+		if err := helper.ValidateMimeType(fileContent); err != nil {
+			ctx.JSON(http.StatusBadRequest, dto.Response{
+				Status:  dto.STATUS_ERROR,
+				Message: err.Error(),
+			})
+			return
+		}
+	}
+
 	if file == nil {
 		file = nil
 		if reportRequest.Content == "" {
@@ -199,8 +260,35 @@ func (c *ReportController) Show(ctx *gin.Context) {
 		return
 	}
 
+	if !helper.ValidateUUID(id) {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid ID format",
+		})
+		return
+	}
+
+	// 🔒 SECURITY FIX 2: Sanitize ID input (additional protection)
+	sanitizedId := helper.SanitizeString(id)
+	if sanitizedId != id {
+		ctx.JSON(http.StatusBadRequest, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid characters in ID",
+		})
+		return
+	}
+
 	// get token from header
 	token := ctx.GetHeader("Authorization")
+
+	if !helper.IsValidTokenFormat(token) {
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Status:  dto.STATUS_ERROR,
+			Message: "Invalid authorization format",
+		})
+		return
+	}
+
 	if token == "" {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Status:  dto.STATUS_ERROR,
