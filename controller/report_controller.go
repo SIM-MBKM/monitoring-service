@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"monitoring-service/dto"
 	"monitoring-service/helper"
 	"monitoring-service/service"
@@ -29,14 +28,6 @@ func validateReportData(reportRequest dto.ReportRequest, ctx *gin.Context) {
 		return
 	}
 
-	if reportRequest.Content == "" {
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "Content is required",
-		})
-		return
-	}
-
 	if reportRequest.ReportType == "" {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -44,6 +35,7 @@ func validateReportData(reportRequest dto.ReportRequest, ctx *gin.Context) {
 		})
 		return
 	}
+
 	if !helper.ValidateReportType(reportRequest.ReportType) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Status:  dto.STATUS_ERROR,
@@ -192,15 +184,6 @@ func (c *ReportController) Create(ctx *gin.Context) {
 	}
 
 	file, err := ctx.FormFile("file")
-	// if file is not required, set file to nil
-	if err != nil && err != http.ErrMissingFile {
-		log.Printf("File upload error: %v", err)
-		ctx.JSON(http.StatusBadRequest, dto.Response{
-			Status:  dto.STATUS_ERROR,
-			Message: "File upload error",
-		})
-		return
-	}
 
 	if file != nil {
 		if err := helper.ValidateFileUpload(file); err != nil {
@@ -211,25 +194,6 @@ func (c *ReportController) Create(ctx *gin.Context) {
 			return
 		}
 
-		// 🔒 SECURITY FIX 6: Validate MIME type by reading file content
-		// fileContent, err := file.Open()
-		// if err != nil {
-		// 	log.Printf("Error opening file: %v", err)
-		// 	ctx.JSON(http.StatusBadRequest, dto.Response{
-		// 		Status:  dto.STATUS_ERROR,
-		// 		Message: "Unable to process file",
-		// 	})
-		// 	return
-		// }
-		// defer fileContent.Close()
-
-		// if err := helper.ValidateMimeType(fileContent); err != nil {
-		// 	ctx.JSON(http.StatusBadRequest, dto.Response{
-		// 		Status:  dto.STATUS_ERROR,
-		// 		Message: err.Error(),
-		// 	})
-		// 	return
-		// }
 	}
 
 	if file == nil {
