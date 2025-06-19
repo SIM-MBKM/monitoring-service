@@ -372,6 +372,7 @@ func (s *syllabusService) FindByUserNRPAndGroupByRegistrationID(ctx context.Cont
 		registration := s.registrationService.GetRegistrationByID("GET", registrationID, token)
 		registrationActivityName, ok := registration["activity_name"].(string)
 		if !ok {
+			log.Println("REGISTRATION ACTIVITY NAME NOT FOUND FOR REGISTRATION ID: ", registration)
 			return dto.SyllabusByStudentResponse{}, errors.New("registration activity name not found")
 		}
 

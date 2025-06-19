@@ -73,6 +73,7 @@ func (s *transcriptService) FindByAdvisorEmailAndGroupByUserNRP(ctx context.Cont
 
 		registrationActivityName, ok := registration["activity_name"].(string)
 		if !ok {
+			log.Println("ERROR GETTING REGISTRATION ACTIVITY NAME: ", registration)
 			return dto.TranscriptAdvisorResponse{}, dto.PaginationResponse{}, errors.New("registration activity name not found")
 		}
 

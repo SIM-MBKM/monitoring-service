@@ -61,6 +61,7 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 		registration := s.registrationService.GetRegistrationByID("GET", registrationID, token)
 		registrationActivityName, ok := registration["activity_name"].(string)
 		if !ok {
+			log.Println("ERROR GETTING REGISTRATION ACTIVITY NAME: ", registration)
 			return dto.ReportScheduleByStudentResponse{}, errors.New("registration activity name not found")
 		}
 
