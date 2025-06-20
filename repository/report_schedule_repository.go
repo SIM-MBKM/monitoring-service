@@ -74,15 +74,127 @@ func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx con
 	return userReportSchedules, nil
 }
 
+// func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error) {
+// 	if tx == nil {
+// 		tx = r.db
+// 	}
+
+// 	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
+// 	var userNRPs []string
+// 	query := tx.Debug().
+// 		Model(&entity.ReportSchedule{}).
+// 		Where("academic_advisor_email = ?", advisorEmail).
+// 		Where("deleted_at IS NULL")
+
+// 	if userNrp != "" {
+// 		query = query.Where("user_nrp = ?", userNrp)
+// 	}
+
+// 	err := query.Distinct("user_nrp").
+// 		Order("user_nrp ASC").
+// 		Pluck("user_nrp", &userNRPs).Error
+
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Get total count of unique UserNRPs
+// 	totalCount := int64(len(userNRPs))
+
+// 	// Apply pagination to the UserNRPs list
+// 	var paginatedUserNRPs []string
+// 	if pagReq != nil {
+// 		startIdx := pagReq.Offset
+// 		endIdx := pagReq.Offset + pagReq.Limit
+
+// 		// Check bounds
+// 		if startIdx >= len(userNRPs) {
+// 			paginatedUserNRPs = []string{}
+// 		} else if endIdx > len(userNRPs) {
+// 			paginatedUserNRPs = userNRPs[startIdx:]
+// 		} else {
+// 			paginatedUserNRPs = userNRPs[startIdx:endIdx]
+// 		}
+// 	} else {
+// 		paginatedUserNRPs = userNRPs
+// 	}
+
+// 	// Return empty if no UserNRPs after pagination
+// 	if len(paginatedUserNRPs) == 0 {
+// 		return make(map[string][]entity.ReportSchedule), totalCount, nil
+// 	}
+
+// 	// Now fetch the report schedules for only the paginated UserNRPs
+// 	var allReportSchedules []entity.ReportSchedule
+// 	err = tx.Debug().
+// 		Model(&entity.ReportSchedule{}).
+// 		Where("academic_advisor_email = ?", advisorEmail).
+// 		Where("user_nrp IN ?", paginatedUserNRPs).
+// 		Where("deleted_at IS NULL").
+// 		Order("user_nrp ASC").
+// 		Find(&allReportSchedules).Error
+
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Group them by user_nrp
+// 	userReportSchedules := make(map[string][]entity.ReportSchedule)
+
+// 	for _, schedule := range allReportSchedules {
+// 		// Get the latest report for this schedule
+// 		var report entity.Report
+// 		err = tx.Debug().
+// 			Model(&entity.Report{}).
+// 			Where("report_schedule_id = ?", schedule.ID).
+// 			Where("deleted_at IS NULL").
+// 			Order("created_at DESC").
+// 			Limit(1).
+// 			First(&report).Error
+
+// 		if err != nil && err != gorm.ErrRecordNotFound {
+// 			return nil, 0, err
+// 		}
+
+// 		if report.ID != uuid.Nil {
+// 			schedule.Report = []entity.Report{report}
+// 		}
+
+// 		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
+// 	}
+
+// 	return userReportSchedules, totalCount, nil
+// }
+
+// Gunakan subquery untuk pagination yang efisien
 func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error) {
 	if tx == nil {
 		tx = r.db
 	}
 
-	// First, get all unique UserNRPs for this advisor (ordered by user_nrp)
-	var userNRPs []string
+	// Count total unique users
+	var totalCount int64
+	countQuery := tx.Model(&entity.ReportSchedule{}).
+		Where("academic_advisor_email = ?", advisorEmail).
+		Where("deleted_at IS NULL")
+
+	if userNrp != "" {
+		countQuery = countQuery.Where("user_nrp = ?", userNrp)
+	}
+
+	err := countQuery.Distinct("user_nrp").Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated data with joined reports
+	var allReportSchedules []entity.ReportSchedule
 	query := tx.Debug().
-		Model(&entity.ReportSchedule{}).
+		Preload("Report", func(db *gorm.DB) *gorm.DB {
+			return db.Where("deleted_at IS NULL").
+				Order("created_at DESC").
+				Limit(1)
+		}).
 		Where("academic_advisor_email = ?", advisorEmail).
 		Where("deleted_at IS NULL")
 
@@ -90,47 +202,21 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		query = query.Where("user_nrp = ?", userNrp)
 	}
 
-	err := query.Distinct("user_nrp").
-		Order("user_nrp ASC").
-		Pluck("user_nrp", &userNRPs).Error
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Get total count of unique UserNRPs
-	totalCount := int64(len(userNRPs))
-
-	// Apply pagination to the UserNRPs list
-	var paginatedUserNRPs []string
-	if pagReq != nil {
-		startIdx := pagReq.Offset
-		endIdx := pagReq.Offset + pagReq.Limit
-
-		// Check bounds
-		if startIdx >= len(userNRPs) {
-			paginatedUserNRPs = []string{}
-		} else if endIdx > len(userNRPs) {
-			paginatedUserNRPs = userNRPs[startIdx:]
-		} else {
-			paginatedUserNRPs = userNRPs[startIdx:endIdx]
-		}
-	} else {
-		paginatedUserNRPs = userNRPs
-	}
-
-	// Return empty if no UserNRPs after pagination
-	if len(paginatedUserNRPs) == 0 {
-		return make(map[string][]entity.ReportSchedule), totalCount, nil
-	}
-
-	// Now fetch the report schedules for only the paginated UserNRPs
-	var allReportSchedules []entity.ReportSchedule
-	err = tx.Debug().
-		Model(&entity.ReportSchedule{}).
+	// Subquery untuk pagination berdasarkan user_nrp
+	subQuery := tx.Model(&entity.ReportSchedule{}).
+		Select("DISTINCT user_nrp").
 		Where("academic_advisor_email = ?", advisorEmail).
-		Where("user_nrp IN ?", paginatedUserNRPs).
-		Where("deleted_at IS NULL").
+		Where("deleted_at IS NULL")
+
+	if userNrp != "" {
+		subQuery = subQuery.Where("user_nrp = ?", userNrp)
+	}
+
+	if pagReq != nil {
+		subQuery = subQuery.Limit(pagReq.Limit).Offset(pagReq.Offset)
+	}
+
+	err = query.Where("user_nrp IN (?)", subQuery).
 		Order("user_nrp ASC").
 		Find(&allReportSchedules).Error
 
@@ -138,28 +224,9 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return nil, 0, err
 	}
 
-	// Group them by user_nrp
+	// Group by user_nrp (sama seperti sebelumnya tapi tanpa loop query)
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
-
 	for _, schedule := range allReportSchedules {
-		// Get the latest report for this schedule
-		var report entity.Report
-		err = tx.Debug().
-			Model(&entity.Report{}).
-			Where("report_schedule_id = ?", schedule.ID).
-			Where("deleted_at IS NULL").
-			Order("created_at DESC").
-			Limit(1).
-			First(&report).Error
-
-		if err != nil && err != gorm.ErrRecordNotFound {
-			return nil, 0, err
-		}
-
-		if report.ID != uuid.Nil {
-			schedule.Report = []entity.Report{report}
-		}
-
 		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
 	}
 
