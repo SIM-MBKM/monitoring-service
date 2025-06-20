@@ -116,6 +116,86 @@ func (s *reportScheduleService) FindByUserNRPAndGroupByRegistrationID(ctx contex
 	}, nil
 }
 
+// func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest, reportScheduleRequest dto.ReportScheduleAdvisorRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error) {
+// 	user := s.userManagementService.GetUserData("GET", token)
+// 	advisorEmail, ok := user["email"].(string)
+// 	if !ok {
+// 		return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, errors.New("advisor email not found")
+// 	}
+
+// 	// log.Println("Getting report schedules for advisor email:", advisorEmail)
+
+// 	reportSchedules, totalCount, err := s.reportScheduleRepo.FindByAdvisorEmailAndGroupByUserID(ctx, advisorEmail, nil, &pagReq, reportScheduleRequest.UserNRP)
+// 	if err != nil {
+// 		return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, err
+// 	}
+
+// 	// log.Println("Found report schedules, total count:", totalCount)
+// 	// log.Println("Map keys in reportSchedules:", getMapKeys(reportSchedules))
+
+// 	reportScheduleResponses := make(map[string][]dto.ReportScheduleResponse)
+
+// 	for userNRP, reportScheduleAdvisors := range reportSchedules {
+// 		// log.Printf("Processing user NRP: %s with %d schedules", userNRP, len(reportScheduleAdvisors))
+
+// 		var reportSchedule []dto.ReportScheduleResponse
+// 		for _, reportScheduleAdvisor := range reportScheduleAdvisors {
+// 			// log.Printf("  Processing schedule %d for NRP %s with actual UserNRP %s",
+// 			// 	i, userNRP, reportScheduleAdvisor.UserNRP)
+
+// 			// Create the base response
+// 			// get activity name
+// 			registration := s.registrationService.GetRegistrationByID("GET", reportScheduleAdvisor.RegistrationID, token)
+// 			activityName, ok := registration["activity_name"].(string)
+// 			if !ok {
+// 				return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, errors.New("activity name not found")
+// 			}
+
+// 			response := dto.ReportScheduleResponse{
+// 				ID:                   reportScheduleAdvisor.ID.String(),
+// 				UserID:               reportScheduleAdvisor.UserID,
+// 				UserNRP:              reportScheduleAdvisor.UserNRP,
+// 				ActivityName:         activityName,
+// 				RegistrationID:       reportScheduleAdvisor.RegistrationID,
+// 				AcademicAdvisorID:    reportScheduleAdvisor.AcademicAdvisorID,
+// 				AcademicAdvisorEmail: reportScheduleAdvisor.AcademicAdvisorEmail,
+// 				ReportType:           reportScheduleAdvisor.ReportType,
+// 				Week:                 reportScheduleAdvisor.Week,
+// 				StartDate:            reportScheduleAdvisor.StartDate.Format(time.RFC3339),
+// 				EndDate:              reportScheduleAdvisor.EndDate.Format(time.RFC3339),
+// 			}
+
+// 			// Only set Report if there are reports
+// 			if len(reportScheduleAdvisor.Report) > 0 {
+// 				response.Report = &dto.ReportResponse{
+// 					ID:                    reportScheduleAdvisor.Report[0].ID.String(),
+// 					ReportScheduleID:      reportScheduleAdvisor.ID.String(),
+// 					Title:                 reportScheduleAdvisor.Report[0].Title,
+// 					Content:               reportScheduleAdvisor.Report[0].Content,
+// 					ReportType:            reportScheduleAdvisor.Report[0].ReportType,
+// 					Feedback:              reportScheduleAdvisor.Report[0].Feedback,
+// 					AcademicAdvisorStatus: reportScheduleAdvisor.Report[0].AcademicAdvisorStatus,
+// 					FileStorageID:         reportScheduleAdvisor.Report[0].FileStorageID,
+// 				}
+// 			}
+
+// 			reportSchedule = append(reportSchedule, response)
+// 		}
+
+// 		// log.Printf("Adding %d schedules to map with key %s", len(reportSchedule), userNRP)
+// 		reportScheduleResponses[userNRP] = reportSchedule
+// 	}
+
+// 	// log.Println("Final map keys in reportScheduleResponses:", getMapKeys(reportScheduleResponses))
+
+// 	// Generate pagination metadata using the helper
+// 	paginationResponse := helper.MetaDataPagination(totalCount, pagReq)
+
+// 	return dto.ReportScheduleByAdvisorResponse{
+// 		Reports: reportScheduleResponses,
+// 	}, paginationResponse, nil
+// }
+
 func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token string, pagReq dto.PaginationRequest, reportScheduleRequest dto.ReportScheduleAdvisorRequest) (dto.ReportScheduleByAdvisorResponse, dto.PaginationResponse, error) {
 	user := s.userManagementService.GetUserData("GET", token)
 	advisorEmail, ok := user["email"].(string)
@@ -123,32 +203,64 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 		return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, errors.New("advisor email not found")
 	}
 
-	// log.Println("Getting report schedules for advisor email:", advisorEmail)
-
 	reportSchedules, totalCount, err := s.reportScheduleRepo.FindByAdvisorEmailAndGroupByUserID(ctx, advisorEmail, nil, &pagReq, reportScheduleRequest.UserNRP)
 	if err != nil {
 		return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, err
 	}
 
-	// log.Println("Found report schedules, total count:", totalCount)
-	// log.Println("Map keys in reportSchedules:", getMapKeys(reportSchedules))
+	// OPTIMIZATION: Collect all unique registration IDs
+	registrationIDSet := make(map[string]bool)
+	for _, schedules := range reportSchedules {
+		for _, schedule := range schedules {
+			registrationIDSet[schedule.RegistrationID] = true
+		}
+	}
 
+	// Convert to slice
+	var registrationIDs []string
+	for id := range registrationIDSet {
+		registrationIDs = append(registrationIDs, id)
+	}
+
+	// BATCH CALL: Get all registrations at once
+	var registrationMap map[string]map[string]interface{}
+	if len(registrationIDs) > 0 {
+		registrationMap, err = s.registrationService.GetRegistrationsByIDs("GET", registrationIDs, token)
+		if err != nil {
+			log.Printf("Error getting registrations in batch: %v", err)
+			// Fallback to empty map if batch fails
+			registrationMap = make(map[string]map[string]interface{})
+		}
+	} else {
+		registrationMap = make(map[string]map[string]interface{})
+	}
+
+	// Build response using cached registrations
 	reportScheduleResponses := make(map[string][]dto.ReportScheduleResponse)
-
 	for userNRP, reportScheduleAdvisors := range reportSchedules {
-		// log.Printf("Processing user NRP: %s with %d schedules", userNRP, len(reportScheduleAdvisors))
-
 		var reportSchedule []dto.ReportScheduleResponse
 		for _, reportScheduleAdvisor := range reportScheduleAdvisors {
-			// log.Printf("  Processing schedule %d for NRP %s with actual UserNRP %s",
-			// 	i, userNRP, reportScheduleAdvisor.UserNRP)
-
-			// Create the base response
-			// get activity name
-			registration := s.registrationService.GetRegistrationByID("GET", reportScheduleAdvisor.RegistrationID, token)
-			activityName, ok := registration["activity_name"].(string)
-			if !ok {
-				return dto.ReportScheduleByAdvisorResponse{}, dto.PaginationResponse{}, errors.New("activity name not found")
+			// Get activity name from batch result (O(1) lookup)
+			var activityName string
+			if registration, exists := registrationMap[reportScheduleAdvisor.RegistrationID]; exists {
+				if name, ok := registration["activity_name"].(string); ok {
+					activityName = name
+				} else {
+					activityName = "Unknown Activity" // fallback
+				}
+			} else {
+				// Fallback: call individual API if not found in batch
+				log.Printf("Registration ID %s not found in batch, calling individual API", reportScheduleAdvisor.RegistrationID)
+				registration := s.registrationService.GetRegistrationByID("GET", reportScheduleAdvisor.RegistrationID, token)
+				if registration != nil {
+					if name, ok := registration["activity_name"].(string); ok {
+						activityName = name
+					} else {
+						activityName = "Unknown Activity"
+					}
+				} else {
+					activityName = "Unknown Activity"
+				}
 			}
 
 			response := dto.ReportScheduleResponse{
@@ -178,19 +290,12 @@ func (s *reportScheduleService) FindByAdvisorEmail(ctx context.Context, token st
 					FileStorageID:         reportScheduleAdvisor.Report[0].FileStorageID,
 				}
 			}
-
 			reportSchedule = append(reportSchedule, response)
 		}
-
-		// log.Printf("Adding %d schedules to map with key %s", len(reportSchedule), userNRP)
 		reportScheduleResponses[userNRP] = reportSchedule
 	}
 
-	// log.Println("Final map keys in reportScheduleResponses:", getMapKeys(reportScheduleResponses))
-
-	// Generate pagination metadata using the helper
 	paginationResponse := helper.MetaDataPagination(totalCount, pagReq)
-
 	return dto.ReportScheduleByAdvisorResponse{
 		Reports: reportScheduleResponses,
 	}, paginationResponse, nil
