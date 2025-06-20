@@ -188,7 +188,7 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return nil, 0, err
 	}
 
-	// 2. Get paginated user_nrps (FIX: ambil beberapa user sesuai limit)
+	// 2. Get paginated user_nrps
 	var paginatedUserNRPs []string
 	userQuery := tx.Model(&entity.ReportSchedule{}).
 		Select("DISTINCT user_nrp").
@@ -224,21 +224,30 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return nil, 0, err
 	}
 
-	// 4. Get latest reports for each schedule (FIX: gunakan window function atau map)
+	// 4. Get latest reports for each schedule (FIXED: gunakan kolom yang benar)
 	if len(allReportSchedules) > 0 {
 		scheduleIDs := make([]string, len(allReportSchedules))
 		for i, schedule := range allReportSchedules {
 			scheduleIDs[i] = schedule.ID.String()
 		}
 
-		// Raw query untuk mendapatkan latest report per schedule
+		// Raw query dengan kolom yang sesuai struct Report
 		var latestReports []entity.Report
 		err = tx.Raw(`
             SELECT DISTINCT ON (report_schedule_id) 
-                   report_schedule_id, id, created_at, title, status, content, updated_at
+                   id, 
+                   report_schedule_id, 
+                   title, 
+                   content, 
+                   report_type, 
+                   file_storage_id, 
+                   feedback, 
+                   academic_advisor_status, 
+                   created_at, 
+                   updated_at
             FROM reports 
             WHERE deleted_at IS NULL 
-              AND report_schedule_id IN (?)
+              AND report_schedule_id IN ?
             ORDER BY report_schedule_id, created_at DESC
         `, scheduleIDs).Scan(&latestReports).Error
 
