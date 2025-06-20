@@ -167,12 +167,13 @@ func (r *reportScheduleRepository) FindByUserNRPAndGroupByRegistrationID(ctx con
 // }
 
 // Gunakan subquery untuk pagination yang efisien
+// Ganti logika pagination
 func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx context.Context, advisorEmail string, tx *gorm.DB, pagReq *dto.PaginationRequest, userNrp string) (map[string][]entity.ReportSchedule, int64, error) {
 	if tx == nil {
 		tx = r.db
 	}
 
-	// Count total unique users
+	// 1. Count total unique users
 	var totalCount int64
 	countQuery := tx.Model(&entity.ReportSchedule{}).
 		Where("academic_advisor_email = ?", advisorEmail).
@@ -187,36 +188,35 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return nil, 0, err
 	}
 
-	// Get paginated data with joined reports
-	var allReportSchedules []entity.ReportSchedule
-	query := tx.Debug().
-		Preload("Report", func(db *gorm.DB) *gorm.DB {
-			return db.Where("deleted_at IS NULL").
-				Order("created_at DESC").
-				Limit(1)
-		}).
-		Where("academic_advisor_email = ?", advisorEmail).
-		Where("deleted_at IS NULL")
-
-	if userNrp != "" {
-		query = query.Where("user_nrp = ?", userNrp)
-	}
-
-	// Subquery untuk pagination berdasarkan user_nrp
-	subQuery := tx.Model(&entity.ReportSchedule{}).
+	// 2. Get paginated user_nrps (FIX: ambil beberapa user sesuai limit)
+	var paginatedUserNRPs []string
+	userQuery := tx.Model(&entity.ReportSchedule{}).
 		Select("DISTINCT user_nrp").
 		Where("academic_advisor_email = ?", advisorEmail).
 		Where("deleted_at IS NULL")
 
 	if userNrp != "" {
-		subQuery = subQuery.Where("user_nrp = ?", userNrp)
+		userQuery = userQuery.Where("user_nrp = ?", userNrp)
 	}
 
 	if pagReq != nil {
-		subQuery = subQuery.Limit(pagReq.Limit).Offset(pagReq.Offset)
+		userQuery = userQuery.Limit(pagReq.Limit).Offset(pagReq.Offset)
 	}
 
-	err = query.Where("user_nrp IN (?)", subQuery).
+	err = userQuery.Order("user_nrp ASC").Pluck("user_nrp", &paginatedUserNRPs).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if len(paginatedUserNRPs) == 0 {
+		return make(map[string][]entity.ReportSchedule), totalCount, nil
+	}
+
+	// 3. Get report schedules for paginated users
+	var allReportSchedules []entity.ReportSchedule
+	err = tx.Where("academic_advisor_email = ?", advisorEmail).
+		Where("user_nrp IN ?", paginatedUserNRPs).
+		Where("deleted_at IS NULL").
 		Order("user_nrp ASC").
 		Find(&allReportSchedules).Error
 
@@ -224,7 +224,43 @@ func (r *reportScheduleRepository) FindByAdvisorEmailAndGroupByUserID(ctx contex
 		return nil, 0, err
 	}
 
-	// Group by user_nrp (sama seperti sebelumnya tapi tanpa loop query)
+	// 4. Get latest reports for each schedule (FIX: gunakan window function atau map)
+	if len(allReportSchedules) > 0 {
+		scheduleIDs := make([]string, len(allReportSchedules))
+		for i, schedule := range allReportSchedules {
+			scheduleIDs[i] = schedule.ID.String()
+		}
+
+		// Raw query untuk mendapatkan latest report per schedule
+		var latestReports []entity.Report
+		err = tx.Raw(`
+            SELECT DISTINCT ON (report_schedule_id) 
+                   report_schedule_id, id, created_at, title, status, content, updated_at
+            FROM reports 
+            WHERE deleted_at IS NULL 
+              AND report_schedule_id IN (?)
+            ORDER BY report_schedule_id, created_at DESC
+        `, scheduleIDs).Scan(&latestReports).Error
+
+		if err != nil {
+			return nil, 0, err
+		}
+
+		// Map reports to schedules
+		reportMap := make(map[string]entity.Report)
+		for _, report := range latestReports {
+			reportMap[report.ReportScheduleID] = report
+		}
+
+		// Attach reports to schedules
+		for i := range allReportSchedules {
+			if report, exists := reportMap[allReportSchedules[i].ID.String()]; exists {
+				allReportSchedules[i].Report = []entity.Report{report}
+			}
+		}
+	}
+
+	// 5. Group by user_nrp
 	userReportSchedules := make(map[string][]entity.ReportSchedule)
 	for _, schedule := range allReportSchedules {
 		userReportSchedules[schedule.UserNRP] = append(userReportSchedules[schedule.UserNRP], schedule)
